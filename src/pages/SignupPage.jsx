@@ -4,19 +4,32 @@ import { Input } from '../components/common/Input';
 import { useApp } from '../context/AppContext';
 
 export const SignupPage = ({ onNavigate, onSignup }) => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: '' 
+  });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { showToast } = useApp();
+  const { showToast, registerUser, users } = useApp();
 
   const validate = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    
+    // Check if email already exists
+    if (users.find(u => u.email === formData.email)) {
+      newErrors.email = 'Email already registered. Please login instead.';
+    }
+    
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
     return newErrors;
   };
 
@@ -27,31 +40,57 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
       setErrors(newErrors);
       return;
     }
+    
     setLoading(true);
     setTimeout(() => {
+      const userData = { 
+        name: formData.name, 
+        email: formData.email, 
+        password: formData.password,
+        username: formData.name.toLowerCase().replace(/\s/g, ''),
+        avatar: `https://i.pravatar.cc/150?u=${formData.email}`,
+        bio: '',
+        location: '',
+        website: ''
+      };
+      
+      registerUser(userData);
       showToast('Account created successfully!', 'success');
-      onSignup({ name: formData.name, email: formData.email, username: formData.name.toLowerCase().replace(/\s/g, '') });
+      onSignup(userData);
       setLoading(false);
     }, 1000);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-blue-900">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 to-cyan-50 dark:from-gray-950 dark:to-gray-900">
+      <div className="w-full max-w-md animate-scale-in">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h1>
-          <p className="text-gray-600 dark:text-gray-400">Join ConnectSphere today</p>
+          <div className="inline-block mb-6">
+            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
+              <span className="text-white font-bold text-3xl">C</span>
+            </div>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            Create Account
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Join ConnectSphere today
+          </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-800">
-          <form onSubmit={handleSubmit}>
+        {/* Form Card */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Full Name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               error={errors.name}
               placeholder="John Doe"
+              autoComplete="name"
             />
+            
             <Input
               label="Email"
               type="email"
@@ -59,7 +98,9 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               error={errors.email}
               placeholder="you@example.com"
+              autoComplete="email"
             />
+            
             <Input
               label="Password"
               type="password"
@@ -67,7 +108,9 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               error={errors.password}
               placeholder="••••••••"
+              autoComplete="new-password"
             />
+            
             <Input
               label="Confirm Password"
               type="password"
@@ -75,15 +118,31 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               error={errors.confirmPassword}
               placeholder="••••••••"
+              autoComplete="new-password"
             />
 
-            <Button type="submit" className="w-full mb-4" disabled={loading}>
-              {loading ? 'Creating account...' : 'Sign Up'}
+            <Button 
+              type="submit" 
+              className="w-full mt-6" 
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">⏳</span>
+                  Creating account...
+                </span>
+              ) : (
+                'Sign Up'
+              )}
             </Button>
 
-            <p className="text-center text-gray-600 dark:text-gray-400">
+            <p className="text-center text-gray-600 dark:text-gray-400 mt-6">
               Already have an account?{' '}
-              <button onClick={() => onNavigate('login')} className="text-blue-600 hover:underline font-semibold">
+              <button 
+                type="button"
+                onClick={() => onNavigate('login')} 
+                className="text-primary-600 dark:text-primary-400 hover:underline font-semibold transition-colors"
+              >
                 Sign in
               </button>
             </p>
