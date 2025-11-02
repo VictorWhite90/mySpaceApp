@@ -2,17 +2,17 @@ import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Sparkles, Zap, Bell, Users, TrendingUp } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
-import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
+import { useScrollReveal } from '../hooks/useScrollReveals';
 
 export const LandingPage = () => {
   const { darkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
 
-  // Initialize scroll reveal animations
-  useScrollReveal();
+  // Initialize scroll reveal animations - attach ref to main container
+  const scrollRevealRef = useScrollReveal('.scroll-reveal');
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden dark-mode-transition">
+    <div ref={scrollRevealRef} className="min-h-screen bg-white dark:bg-black relative overflow-hidden dark-mode-transition">
       {/* Morphing Blob Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Primary Morphing Blob */}

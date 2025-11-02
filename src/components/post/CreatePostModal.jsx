@@ -47,7 +47,7 @@ export const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
             <img src={image} alt="Preview" className="w-full rounded-lg max-h-64 object-cover" />
             <button
               onClick={() => setImage(null)}
-              className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full"
+              className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
             >
               <X size={20} className="text-white" />
             </button>
@@ -57,7 +57,7 @@ export const CreatePostModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="flex items-center justify-between">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-blue-600"
+            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-blue-600 transition-colors"
           >
             <ImageIcon size={20} />
           </button>
