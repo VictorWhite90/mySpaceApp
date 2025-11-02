@@ -1,10 +1,10 @@
 export const Button = ({ children, variant = 'primary', size = 'md', className = '', ...props }) => {
   const baseClasses = 'font-semibold rounded-lg transition-all duration-300 active:scale-95';
   const variants = {
-    primary: 'bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white shadow-lg hover:shadow-xl',
-    secondary: 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white',
-    outline: 'border-2 border-primary-500 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20',
-    ghost: 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300',
+    primary: 'bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black shadow-lg hover:shadow-2xl',
+    secondary: 'bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white',
+    outline: 'border-2 border-gray-900 dark:border-white text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900',
+    ghost: 'hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300',
   };
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',

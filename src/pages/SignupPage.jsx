@@ -16,11 +16,10 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
     
-    // Check if email already exists
     if (users.find(u => u.email === formData.email)) {
       newErrors.email = 'Email already registered. Please login instead.';
     }
@@ -44,10 +43,10 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
     setLoading(true);
     setTimeout(() => {
       const userData = { 
-        name: formData.name, 
+        name: formData.name.trim(), 
         email: formData.email, 
         password: formData.password,
-        username: formData.name.toLowerCase().replace(/\s/g, ''),
+        username: formData.name.toLowerCase().replace(/\s+/g, ''),
         avatar: `https://i.pravatar.cc/150?u=${formData.email}`,
         bio: '',
         location: '',
@@ -58,17 +57,17 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
       showToast('Account created successfully!', 'success');
       onSignup(userData);
       setLoading(false);
-    }, 1000);
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 to-cyan-50 dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-black">
       <div className="w-full max-w-md animate-scale-in">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-block mb-6">
-            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
-              <span className="text-white font-bold text-3xl">C</span>
+            <div className="w-16 h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
+              <span className="text-white dark:text-black font-bold text-3xl">C</span>
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -80,7 +79,7 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-50 dark:bg-gray-950 rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Full Name"
@@ -141,7 +140,7 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
               <button 
                 type="button"
                 onClick={() => onNavigate('login')} 
-                className="text-primary-600 dark:text-primary-400 hover:underline font-semibold transition-colors"
+                className="text-black dark:text-white hover:underline font-semibold transition-colors"
               >
                 Sign in
               </button>

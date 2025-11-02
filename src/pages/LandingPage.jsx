@@ -6,24 +6,24 @@ export const LandingPage = ({ onNavigate }) => {
   const { darkMode, toggleDarkMode } = useApp();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 relative overflow-hidden">
-      {/* Animated Background Blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-60">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-300 dark:bg-primary-900/30 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl animate-float"></div>
-        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-secondary-300 dark:bg-secondary-900/30 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute -bottom-40 right-1/3 w-96 h-96 bg-accent-300 dark:bg-accent-900/30 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
+    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
+      {/* Animated Background Blobs - Grayscale */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gray-400 dark:bg-gray-700 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float"></div>
+        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-gray-300 dark:bg-gray-800 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute -bottom-40 right-1/3 w-96 h-96 bg-gray-500 dark:bg-gray-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
       </div>
 
       {/* Navbar */}
-      <nav className="fixed top-0 w-full glass border-b border-gray-200 dark:border-gray-800 z-50 animate-fade-in-down">
+      <nav className="fixed top-0 w-full glass z-50 animate-fade-in-down">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform">
-                <span className="text-white font-bold text-xl sm:text-2xl">C</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform">
+                <span className="text-white dark:text-black font-bold text-xl sm:text-2xl">C</span>
               </div>
-              <span className="text-xl sm:text-2xl font-bold text-gradient hidden sm:block">
+              <span className="text-xl sm:text-2xl font-bold text-black dark:text-white hidden sm:block">
                 ConnectSphere
               </span>
             </div>
@@ -32,13 +32,13 @@ export const LandingPage = ({ onNavigate }) => {
             <div className="flex items-center gap-2 sm:gap-4">
               <button 
                 onClick={toggleDarkMode} 
-                className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all transform hover:scale-110 active:scale-95"
+                className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all transform hover:scale-110 active:scale-95"
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? (
-                  <Sun size={20} className="text-primary-500" />
+                  <Sun size={20} className="text-white" />
                 ) : (
-                  <Moon size={20} className="text-secondary-600" />
+                  <Moon size={20} className="text-black" />
                 )}
               </button>
               <Button 
@@ -65,7 +65,7 @@ export const LandingPage = ({ onNavigate }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 rounded-full text-primary-700 dark:text-primary-400 text-sm font-semibold mb-6 sm:mb-8 animate-bounce-in border border-primary-200 dark:border-primary-800">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-900 rounded-full text-gray-900 dark:text-white text-sm font-semibold mb-6 sm:mb-8 animate-bounce-in border border-gray-300 dark:border-gray-700">
               <Sparkles size={16} />
               <span className="hidden sm:inline">Join 10,000+ users worldwide</span>
               <span className="sm:hidden">10K+ users</span>
@@ -73,9 +73,11 @@ export const LandingPage = ({ onNavigate }) => {
 
             {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 sm:mb-8 animate-fade-in">
-              <span className="text-gray-900 dark:text-white">Connect, Share,</span>
+              <span className="text-black dark:text-white">Connect, Share,</span>
               <br />
-              <span className="text-gradient">Inspire Together</span>
+              <span className="bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-300 dark:to-white bg-clip-text text-transparent">
+                Inspire Together
+              </span>
             </h1>
 
             {/* Subtitle */}
@@ -114,7 +116,7 @@ export const LandingPage = ({ onNavigate }) => {
                   className="animate-fade-in-up"
                   style={{ animationDelay: stat.delay }}
                 >
-                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient mb-1">
+                  <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-black dark:text-white mb-1">
                     {stat.number}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -128,10 +130,10 @@ export const LandingPage = ({ onNavigate }) => {
       </div>
 
       {/* Features Section */}
-      <div className="relative py-12 sm:py-20 px-4">
+      <div className="relative py-12 sm:py-20 px-4 bg-gray-50 dark:bg-gray-950">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12 sm:mb-16 animate-scale-in">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black dark:text-white mb-4">
               Why Choose ConnectSphere?
             </h2>
             <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -143,37 +145,31 @@ export const LandingPage = ({ onNavigate }) => {
             {[
               {
                 icon: Zap,
-                gradient: 'from-primary-500 to-red-500',
                 title: 'Real-Time Updates',
                 desc: 'Stay connected with instant notifications and live updates from your network',
               },
               {
                 icon: Users,
-                gradient: 'from-secondary-500 to-blue-500',
                 title: 'Rich Media Sharing',
                 desc: 'Share photos, videos, and content with beautiful, responsive layouts',
               },
               {
                 icon: Bell,
-                gradient: 'from-accent-500 to-green-500',
                 title: 'Smart Notifications',
                 desc: 'Never miss important updates with intelligent notification system',
               },
               {
                 icon: TrendingUp,
-                gradient: 'from-pink-500 to-primary-500',
                 title: 'Trending Content',
                 desc: 'Discover what\'s popular and join conversations that matter',
               },
               {
                 icon: Sparkles,
-                gradient: 'from-purple-500 to-secondary-500',
                 title: 'Beautiful Design',
                 desc: 'Enjoy a modern, intuitive interface that works on all devices',
               },
               {
                 icon: Users,
-                gradient: 'from-green-500 to-accent-500',
                 title: 'Community First',
                 desc: 'Build meaningful connections and engage with like-minded people',
               },
@@ -184,10 +180,10 @@ export const LandingPage = ({ onNavigate }) => {
                   key={i}
                   className={`group bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover-lift animate-fade-in-up stagger-${i + 1}`}
                 >
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
-                    <Icon className="text-white" size={28} />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                    <Icon className="text-white dark:text-black" size={28} />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-3 text-black dark:text-white">
                     {feature.title}
                   </h3>
                   <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
@@ -213,7 +209,7 @@ export const LandingPage = ({ onNavigate }) => {
             <Button 
               onClick={() => onNavigate('signup')}
               size="lg"
-              className="bg-white text-primary-600 hover:bg-gray-100 hover:shadow-2xl w-full sm:w-auto"
+              className="bg-black text-white hover:shadow-2xl w-full sm:w-auto"
             >
               Create Free Account
             </Button>
@@ -224,7 +220,7 @@ export const LandingPage = ({ onNavigate }) => {
       {/* Footer */}
       <footer className="relative py-8 px-4 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>© 2025 ConnectSphere. Made with ❤️ for connecting people.</p>
+          <p>© 2025 ConnectSphere. Designed with minimalism in mind.</p>
         </div>
       </footer>
     </div>

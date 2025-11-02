@@ -43,13 +43,13 @@ export const LoginPage = ({ onNavigate, onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-orange-50 to-cyan-50 dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-black">
       <div className="w-full max-w-md animate-scale-in">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-block mb-6">
-            <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
-              <span className="text-white font-bold text-3xl">C</span>
+            <div className="w-16 h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
+              <span className="text-white dark:text-black font-bold text-3xl">C</span>
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -61,7 +61,7 @@ export const LoginPage = ({ onNavigate, onLogin }) => {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800">
+        <div className="bg-gray-50 dark:bg-gray-950 rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"
@@ -112,7 +112,7 @@ export const LoginPage = ({ onNavigate, onLogin }) => {
                 <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">Or continue with</span>
+                <span className="px-2 bg-gray-50 dark:bg-gray-950 text-gray-500">Or continue with</span>
               </div>
             </div>
 
@@ -130,7 +130,7 @@ export const LoginPage = ({ onNavigate, onLogin }) => {
               <button 
                 type="button"
                 onClick={() => onNavigate('signup')} 
-                className="text-primary-600 dark:text-primary-400 hover:underline font-semibold transition-colors"
+                className="text-black dark:text-white hover:underline font-semibold transition-colors"
               >
                 Sign up
               </button>
