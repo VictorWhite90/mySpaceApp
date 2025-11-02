@@ -9,7 +9,7 @@ import { PostSkeleton } from '../components/common/PostSkeleton';
 import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
 import { generateMockPosts } from '../utils/mockData';
-import { useScrollReveal } from '../hooks/useSCrollReveal';
+import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
 
 export const Dashboard = ({ user, onLogout }) => {
   const [posts, setPosts] = useState([]);
