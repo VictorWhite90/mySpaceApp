@@ -1,16 +1,23 @@
 import { Heart, MessageCircle, Edit2, MapPin, Link as LinkIcon } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { generateMockPosts } from '../utils/mockData';
+import { useNavigate } from 'react-router-dom';
 
-export const ProfilePage = ({ user, onBack, onEditProfile }) => {
+export const ProfilePage = ({ user, onEditProfile }) => {
+  const navigate = useNavigate();
   const userPosts = generateMockPosts(12).map((post) => ({ ...post, user }));
+
+  const handleBack = () => {
+    // Go back to previous page, or to home if no history
+    navigate(-1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Cover Photo */}
       <div className="relative h-48 sm:h-64 bg-gradient-to-r from-blue-600 to-purple-600">
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="absolute top-4 left-4 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white"
         >
           ← Back

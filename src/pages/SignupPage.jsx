@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { useApp } from '../context/AppContext';
 
-export const SignupPage = ({ onNavigate, onSignup }) => {
+export const SignupPage = ({ onSignup }) => {
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -13,6 +14,7 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { showToast, registerUser, users } = useApp();
+  const navigate = useNavigate();
 
   const validate = () => {
     const newErrors = {};
@@ -56,6 +58,7 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
       registerUser(userData);
       showToast('Account created successfully!', 'success');
       onSignup(userData);
+      navigate('/dashboard');
       setLoading(false);
     }, 800);
   };
@@ -65,8 +68,8 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
       <div className="w-full max-w-md animate-scale-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-block mb-6">
-            <div className="w-16 h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
+          <div className="inline-block mb-6 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-16 h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in hover:scale-110 transition-transform">
               <span className="text-white dark:text-black font-bold text-3xl">C</span>
             </div>
           </div>
@@ -139,7 +142,7 @@ export const SignupPage = ({ onNavigate, onSignup }) => {
               Already have an account?{' '}
               <button 
                 type="button"
-                onClick={() => onNavigate('login')} 
+                onClick={() => navigate('/login')} 
                 className="text-black dark:text-white hover:underline font-semibold transition-colors"
               >
                 Sign in

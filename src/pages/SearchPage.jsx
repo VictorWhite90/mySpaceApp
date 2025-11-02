@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Post } from '../components/post/Post';
 import { generateMockPosts } from '../utils/mockData';
 
-export const SearchPage = ({ onBack, onUserClick }) => {
+export const SearchPage = ({ onUserClick }) => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState({ users: [], posts: [] });
+
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
@@ -31,7 +37,7 @@ export const SearchPage = ({ onBack, onUserClick }) => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={onBack} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg">
+          <button onClick={handleBack} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg">
             ← Back
           </button>
           <div className="flex-1 relative">

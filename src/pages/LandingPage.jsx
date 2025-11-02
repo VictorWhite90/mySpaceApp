@@ -1,14 +1,20 @@
+import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Sparkles, Zap, Bell, Users, TrendingUp } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
+import { useScrollReveal } from '../hooks/useSCrollReveal';
 
-export const LandingPage = ({ onNavigate }) => {
+export const LandingPage = () => {
   const { darkMode, toggleDarkMode } = useApp();
+  const navigate = useNavigate();
+  
+  // Initialize scroll reveal animations
+  useScrollReveal();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden dark-mode-transition">
       {/* Animated Background Blobs - Grayscale */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20 dark-mode-transition">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-gray-400 dark:bg-gray-700 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float"></div>
         <div className="absolute top-1/2 -left-40 w-96 h-96 bg-gray-300 dark:bg-gray-800 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
         <div className="absolute -bottom-40 right-1/3 w-96 h-96 bg-gray-500 dark:bg-gray-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
@@ -19,7 +25,7 @@ export const LandingPage = ({ onNavigate }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={() => navigate('/')}>
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform">
                 <span className="text-white dark:text-black font-bold text-xl sm:text-2xl">C</span>
               </div>
@@ -32,25 +38,30 @@ export const LandingPage = ({ onNavigate }) => {
             <div className="flex items-center gap-2 sm:gap-4">
               <button 
                 onClick={toggleDarkMode} 
-                className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all transform hover:scale-110 active:scale-95"
+                className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all transform hover:scale-110 active:scale-95 relative group"
                 aria-label="Toggle dark mode"
               >
-                {darkMode ? (
-                  <Sun size={20} className="text-white" />
-                ) : (
-                  <Moon size={20} className="text-black" />
-                )}
+                <div className="relative w-6 h-6">
+                  {darkMode ? (
+                    <Sun size={20} className="text-white absolute inset-0 animate-fade-in" />
+                  ) : (
+                    <Moon size={20} className="text-black absolute inset-0 animate-fade-in" />
+                  )}
+                </div>
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  {darkMode ? 'Light Mode' : 'Dark Mode'}
+                </span>
               </button>
               <Button 
                 variant="ghost" 
-                onClick={() => onNavigate('login')}
+                onClick={() => navigate('/login')}
                 size="sm"
                 className="hidden sm:inline-flex"
               >
                 Login
               </Button>
               <Button 
-                onClick={() => onNavigate('signup')}
+                onClick={() => navigate('/signup')}
                 size="sm"
               >
                 Sign Up
@@ -65,14 +76,14 @@ export const LandingPage = ({ onNavigate }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-900 rounded-full text-gray-900 dark:text-white text-sm font-semibold mb-6 sm:mb-8 animate-bounce-in border border-gray-300 dark:border-gray-700">
+            <div className="scroll-reveal inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-900 rounded-full text-gray-900 dark:text-white text-sm font-semibold mb-6 sm:mb-8 border border-gray-300 dark:border-gray-700">
               <Sparkles size={16} />
               <span className="hidden sm:inline">Join 10,000+ users worldwide</span>
               <span className="sm:hidden">10K+ users</span>
             </div>
 
             {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 sm:mb-8 animate-fade-in">
+            <h1 className="scroll-reveal text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 sm:mb-8">
               <span className="text-black dark:text-white">Connect, Share,</span>
               <br />
               <span className="bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-300 dark:to-white bg-clip-text text-transparent">
@@ -81,15 +92,15 @@ export const LandingPage = ({ onNavigate }) => {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 sm:mb-10 max-w-2xl mx-auto animate-fade-in [animation-delay:200ms]">
+            <p className="scroll-reveal text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 sm:mb-10 max-w-2xl mx-auto">
               Join the next generation of social networking. Share moments, engage with communities, and build meaningful connections in real-time.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 sm:mb-16 animate-fade-in-up [animation-delay:400ms]">
+            <div className="scroll-reveal flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 sm:mb-16">
               <Button 
                 size="lg" 
-                onClick={() => onNavigate('signup')}
+                onClick={() => navigate('/signup')}
                 className="w-full sm:w-auto hover-lift"
               >
                 Get Started Free →
@@ -97,7 +108,7 @@ export const LandingPage = ({ onNavigate }) => {
               <Button 
                 size="lg" 
                 variant="outline" 
-                onClick={() => onNavigate('login')}
+                onClick={() => navigate('/login')}
                 className="w-full sm:w-auto hover-lift"
               >
                 Sign In
@@ -107,14 +118,13 @@ export const LandingPage = ({ onNavigate }) => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-3xl mx-auto">
               {[
-                { number: '10K+', label: 'Users', delay: '0.1s' },
-                { number: '50K+', label: 'Posts', delay: '0.2s' },
-                { number: '100K+', label: 'Connections', delay: '0.3s' },
+                { number: '10K+', label: 'Users' },
+                { number: '50K+', label: 'Posts' },
+                { number: '100K+', label: 'Connections' },
               ].map((stat, i) => (
                 <div 
                   key={i} 
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: stat.delay }}
+                  className={`scroll-reveal stagger-${i + 1}`}
                 >
                   <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-black dark:text-white mb-1">
                     {stat.number}
@@ -130,9 +140,9 @@ export const LandingPage = ({ onNavigate }) => {
       </div>
 
       {/* Features Section */}
-      <div className="relative py-12 sm:py-20 px-4 bg-gray-50 dark:bg-gray-950">
+      <div className="relative py-12 sm:py-20 px-4 bg-gray-50 dark:bg-gray-950 dark-mode-transition">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 sm:mb-16 animate-scale-in">
+          <div className="text-center mb-12 sm:mb-16 scroll-reveal">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black dark:text-white mb-4">
               Why Choose ConnectSphere?
             </h2>
@@ -178,7 +188,7 @@ export const LandingPage = ({ onNavigate }) => {
               return (
                 <div
                   key={i}
-                  className={`group bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover-lift animate-fade-in-up stagger-${i + 1}`}
+                  className={`scroll-reveal group bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover-lift stagger-${i + 1}`}
                 >
                   <div className="w-14 h-14 sm:w-16 sm:h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg">
                     <Icon className="text-white dark:text-black" size={28} />
@@ -199,7 +209,7 @@ export const LandingPage = ({ onNavigate }) => {
       {/* CTA Section */}
       <div className="relative py-12 sm:py-20 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="animated-gradient rounded-3xl p-8 sm:p-12 shadow-2xl text-center animate-scale-in">
+          <div className="scroll-reveal animated-gradient rounded-3xl p-8 sm:p-12 shadow-2xl text-center">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
               Ready to Get Started?
             </h2>
@@ -207,9 +217,9 @@ export const LandingPage = ({ onNavigate }) => {
               Join thousands of users already connecting, sharing, and inspiring on ConnectSphere
             </p>
             <Button 
-              onClick={() => onNavigate('signup')}
+              onClick={() => navigate('/signup')}
               size="lg"
-              className="bg-black text-white hover:shadow-2xl w-full sm:w-auto"
+              className="bg-black text-black hover:bg-gray-100 hover:text-black hover:shadow-2xl w-full sm:w-auto"
             >
               Create Free Account
             </Button>
