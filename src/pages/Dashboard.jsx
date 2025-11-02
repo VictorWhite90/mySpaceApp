@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, User, LogOut, Plus, Moon, Sun, ChevronDown, Menu, X } from 'lucide-react';
+import { Search, Bell, User, LogOut, Plus, Moon, Sun, ChevronDown, Menu, X, RefreshCw, Sparkles } from 'lucide-react';
 import { Post } from '../components/post/Post';
 import { CreatePostModal } from '../components/post/CreatePostModal';
 import { CommentModal } from '../components/post/CommentModal';
@@ -8,74 +8,162 @@ import { NotificationsDropdown } from '../components/notifications/Notifications
 import { PostSkeleton } from '../components/common/PostSkeleton';
 import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
-import { generateMockPosts } from '../utils/mockData';
+import { fetchRealTechNews, fetchRealSportsNews, fetchRealCryptoNews, fetchRealComments } from '../utils/realDataApis';
 import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
 
 export const Dashboard = ({ user, onLogout }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingNew, setLoadingNew] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      user: { name: 'Sarah Chen', avatar: 'https://i.pravatar.cc/150?img=1' },
-      text: 'liked your post',
-      timestamp: new Date(Date.now() - 1800000),
-      read: false,
-    },
-    {
-      id: 2,
-      user: { name: 'Marcus Johnson', avatar: 'https://i.pravatar.cc/150?img=2' },
-      text: 'started following you',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-    },
-    {
-      id: 3,
-      user: { name: 'Elena Rodriguez', avatar: 'https://i.pravatar.cc/150?img=3' },
-      text: 'commented on your post',
-      timestamp: new Date(Date.now() - 7200000),
-      read: false,
-    },
-  ]);
+  const [activeCategory, setActiveCategory] = useState('all');
+  
   const { showToast, darkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  // Initialize scroll reveal
   useScrollReveal();
 
   useEffect(() => {
-    loadInitialPosts();
-  }, []);
+    if (user) {
+      loadInitialData();
+    }
+  }, [user]);
 
-  const loadInitialPosts = () => {
-    setTimeout(() => {
-      setPosts(generateMockPosts(20));
+  const loadInitialData = async () => {
+    setLoading(true);
+    setPage(1);
+    try {
+      const initialPosts = await loadPosts(1);
+      setPosts(initialPosts);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      showToast('Error loading posts', 'error');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  const loadMorePosts = () => {
-    setTimeout(() => {
-      const newPosts = generateMockPosts(10);
-      setPosts((prev) => [...prev, ...newPosts]);
-      if (posts.length > 40) setHasMore(false);
-    }, 1000);
+  const loadNewFeeds = async () => {
+    setLoadingNew(true);
+    setPage(1);
+    try {
+      const newPosts = await loadPosts(1, true);
+      setPosts(newPosts);
+      showToast('New feeds loaded!', 'success');
+    } catch (error) {
+      console.error('Error loading new feeds:', error);
+      showToast('Error loading new feeds', 'error');
+    } finally {
+      setLoadingNew(false);
+    }
   };
+
+  const loadPosts = async (pageNum = 1, isNew = false) => {
+    try {
+      const [techPosts, sportsPosts, cryptoPosts] = await Promise.all([
+        fetchRealTechNews(),
+        fetchRealSportsNews(),
+        fetchRealCryptoNews()
+      ]);
+
+      const allPosts = [...techPosts, ...sportsPosts, ...cryptoPosts]
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      // For new feeds or first load, return fresh posts
+      if (isNew || pageNum === 1) {
+        return allPosts.slice(0, 20);
+      } else {
+        // For load more, return additional posts
+        return allPosts.slice(0, 20 * pageNum);
+      }
+    } catch (error) {
+      console.error('Error loading posts:', error);
+      throw error;
+    }
+  };
+
+  const loadMorePosts = async () => {
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const newPosts = await loadPosts(nextPage);
+      setPosts(newPosts);
+      setPage(nextPage);
+      // Simple hasMore logic - if we got less than expected, assume no more
+      setHasMore(newPosts.length >= 20 * nextPage);
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+      showToast('Error loading more posts', 'error');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const newPosts = await loadPosts(1, true);
+      setPosts(newPosts);
+      setPage(1);
+      showToast('Feed updated!', 'success');
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+      showToast('Error refreshing posts', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePostClick = async (post) => {
+    try {
+      // Fetch real comments for this post
+      const realComments = await fetchRealComments(post.id);
+      const postWithComments = { 
+        ...post, 
+        realComments,
+        // Ensure post has all required properties
+        liked: post.liked || false,
+        comments: post.comments || 0,
+        likes: post.likes || 0
+      };
+      setSelectedPost(postWithComments);
+      setShowCommentModal(true);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      // Still show modal with fallback comments
+      const postWithFallback = { 
+        ...post, 
+        realComments: [],
+        liked: post.liked || false,
+        comments: post.comments || 0,
+        likes: post.likes || 0
+      };
+      setSelectedPost(postWithFallback);
+      setShowCommentModal(true);
+    }
+  };
+
+  const filteredPosts = activeCategory === 'all' 
+    ? posts 
+    : posts.filter(post => post.category === activeCategory);
 
   const handleLike = (postId) => {
     setPosts((prev) =>
       prev.map((post) =>
         post.id === postId
-          ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
+          ? { 
+              ...post, 
+              liked: !post.liked, 
+              likes: post.liked ? (post.likes - 1) : (post.likes + 1) 
+            }
           : post
       )
     );
@@ -83,27 +171,63 @@ export const Dashboard = ({ user, onLogout }) => {
 
   const handleCreatePost = (newPost) => {
     const post = {
-      id: Date.now(),
-      user: { name: user.name, username: user.username, avatar: user.avatar },
+      id: `user_${Date.now()}`,
+      user: { 
+        name: user.name, 
+        username: user.username, 
+        avatar: user.avatar 
+      },
       text: newPost.text,
       image: newPost.image,
       likes: 0,
       comments: 0,
       timestamp: new Date(),
       liked: false,
+      category: 'user',
+      content: newPost.text,
+      source: 'Your Post'
     };
     setPosts([post, ...posts]);
     showToast('Post created successfully!', 'success');
   };
 
-  const handleMarkNotificationsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleAddComment = (postId, comment) => {
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, comments: (post.comments || 0) + 1 }
+          : post
+      )
+    );
+    showToast('Comment added!', 'success');
   };
 
   const handleLogout = () => {
     onLogout();
     navigate('/login');
   };
+
+  // Notifications (simplified)
+  const notifications = [
+    {
+      id: 1,
+      user: { name: 'Sarah Chen', avatar: 'https://i.pravatar.cc/150?img=1' },
+      text: 'liked your post',
+      timestamp: new Date(Date.now() - 1800000),
+      read: false,
+    }
+  ];
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Please log in to view the dashboard</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-black dark-mode-transition">
@@ -121,18 +245,32 @@ export const Dashboard = ({ user, onLogout }) => {
               </span>
             </div>
 
-            {/* Search Bar (Desktop) */}
-            <div className="hidden md:block flex-1 max-w-md mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  onClick={() => navigate('/search')}
-                  placeholder="Search ConnectSphere..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 rounded-lg focus:ring-2 focus:ring-gray-900 dark:focus:ring-white dark:text-white cursor-pointer transition-all"
-                  readOnly
-                />
+            {/* Category Filters & Refresh */}
+            <div className="hidden md:flex items-center gap-4">
+              <div className="flex gap-2">
+                {['all', 'tech', 'sports', 'crypto'].map(category => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`px-3 py-1 rounded-full text-sm capitalize transition-all ${
+                      activeCategory === category
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
               </div>
+              
+              <button
+                onClick={handleRefresh}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all"
+                title="Refresh feed"
+                disabled={loading}
+              >
+                <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              </button>
             </div>
 
             {/* Right Side - Desktop */}
@@ -140,25 +278,15 @@ export const Dashboard = ({ user, onLogout }) => {
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all transform hover:scale-110 active:scale-95 relative group"
-                aria-label="Toggle dark mode"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all transform hover:scale-110 active:scale-95"
               >
-                <div className="relative w-5 h-5">
-                  {darkMode ? (
-                    <Sun size={20} className="text-white absolute inset-0 animate-fade-in" />
-                  ) : (
-                    <Moon size={20} className="text-black absolute inset-0 animate-fade-in" />
-                  )}
-                </div>
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {darkMode ? 'Light Mode' : 'Dark Mode'}
-                </span>
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
 
-              {/* Search (Tablet) */}
+              {/* Search */}
               <button
                 onClick={() => navigate('/search')}
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all"
               >
                 <Search size={20} />
               </button>
@@ -167,11 +295,11 @@ export const Dashboard = ({ user, onLogout }) => {
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 relative transition-all transform hover:scale-110 active:scale-95"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 relative transition-all"
                 >
                   <Bell size={20} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
+                    <span className="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                       {unreadCount}
                     </span>
                   )}
@@ -180,7 +308,6 @@ export const Dashboard = ({ user, onLogout }) => {
                   isOpen={showNotifications}
                   onClose={() => setShowNotifications(false)}
                   notifications={notifications}
-                  onMarkRead={handleMarkNotificationsRead}
                 />
               </div>
 
@@ -231,6 +358,33 @@ export const Dashboard = ({ user, onLogout }) => {
               className="sm:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900"
             >
               {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+
+          {/* Category Filters (Mobile) */}
+          <div className="md:hidden flex items-center gap-4 pb-4">
+            <div className="flex gap-2 overflow-x-auto flex-1">
+              {['all', 'tech', 'sports', 'crypto'].map(category => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-3 py-1 rounded-full text-sm capitalize whitespace-nowrap transition-all ${
+                    activeCategory === category
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={handleRefresh}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900"
+              title="Refresh feed"
+              disabled={loading}
+            >
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
           </div>
 
@@ -291,45 +445,149 @@ export const Dashboard = ({ user, onLogout }) => {
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 pt-20 pb-24">
-        {loading ? (
-          <div className="space-y-4">
-            <PostSkeleton />
-            <PostSkeleton />
-            <PostSkeleton />
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4">
-              {posts.map((post, index) => (
-                <div key={post.id} className="scroll-reveal">
-                  <Post
-                    post={post}
-                    onLike={handleLike}
-                    onComment={(post) => {
-                      setSelectedPost(post);
-                      setShowCommentModal(true);
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-            {hasMore ? (
-              <div className="text-center py-8 scroll-reveal">
-                <Button onClick={loadMorePosts} variant="outline" className="hover-lift">
-                  Load More Posts
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400 animate-fade-in">
-                <p className="text-lg">🎉 You're all caught up!</p>
-                <p className="text-sm mt-2">No more posts to show</p>
-              </div>
-            )}
-          </>
-        )}
+    <div className="max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-24">
+  {/* Pull to Refresh Container */}
+  <div className="relative">
+    {/* Pull Indicator */}
+    <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
+      loadingNew ? 'opacity-100' : 'opacity-0'
+    }`}>
+      <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-3 flex items-center gap-3 border border-gray-200 dark:border-gray-700">
+        <RefreshCw size={18} className={`text-blue-600 ${loadingNew ? 'animate-spin' : ''}`} />
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {loadingNew ? 'Loading new feeds...' : 'Release to refresh'}
+        </span>
       </div>
+    </div>
+
+    {/* Pull to Refresh Hint */}
+    {!loadingNew && filteredPosts.length > 0 && (
+      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center">
+        <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+          <Sparkles size={12} />
+          <span>Pull down to refresh</span>
+        </div>
+      </div>
+    )}
+
+    {loading ? (
+      <div className="space-y-4">
+        <PostSkeleton />
+        <PostSkeleton />
+        <PostSkeleton />
+      </div>
+    ) : (
+      <>
+        <div 
+          className="space-y-4 min-h-screen"
+          ref={(el) => {
+            if (el) {
+              let startY = 0;
+              let currentY = 0;
+              
+              const handleTouchStart = (e) => {
+                // Only trigger when at the top of the page
+                if (window.scrollY === 0 && !loadingNew) {
+                  startY = e.touches[0].clientY;
+                  el.dataset.pulling = 'true';
+                }
+              };
+              
+              const handleTouchMove = (e) => {
+                if (el.dataset.pulling === 'true' && !loadingNew) {
+                  currentY = e.touches[0].clientY;
+                  const pullDistance = currentY - startY;
+                  
+                  // Show visual feedback when pulling
+                  if (pullDistance > 50) {
+                    el.style.transform = `translateY(${Math.min(pullDistance, 100)}px)`;
+                  }
+                  
+                  // Trigger refresh when pulled enough
+                  if (pullDistance > 120) {
+                    loadNewFeeds();
+                    el.dataset.pulling = 'false';
+                    el.style.transform = 'translateY(0px)';
+                  }
+                }
+              };
+              
+              const handleTouchEnd = () => {
+                if (el.dataset.pulling === 'true') {
+                  el.dataset.pulling = 'false';
+                  el.style.transform = 'translateY(0px)';
+                }
+              };
+              
+              // Add event listeners
+              el.addEventListener('touchstart', handleTouchStart);
+              el.addEventListener('touchmove', handleTouchMove);
+              el.addEventListener('touchend', handleTouchEnd);
+              
+              // Cleanup function
+              return () => {
+                el.removeEventListener('touchstart', handleTouchStart);
+                el.removeEventListener('touchmove', handleTouchMove);
+                el.removeEventListener('touchend', handleTouchEnd);
+              };
+            }
+          }}
+        >
+          {filteredPosts.map((post) => (
+            <div 
+              key={post.id} 
+              className="scroll-reveal cursor-pointer transform hover:scale-[1.01] transition-transform duration-200"
+              onClick={() => handlePostClick(post)}
+            >
+              <Post
+                post={post}
+                onLike={handleLike}
+                onComment={(post) => {
+                  setSelectedPost(post);
+                  setShowCommentModal(true);
+                }}
+                clickable={true}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Load More Button */}
+        {hasMore && filteredPosts.length > 0 && (
+          <div className="text-center py-8 scroll-reveal">
+            <Button
+              onClick={loadMorePosts}
+              variant="outline"
+              className="hover-lift min-w-32"
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <RefreshCw size={18} className="animate-spin" />
+              ) : (
+                'Load More'
+              )}
+            </Button>
+          </div>
+        )}
+
+        {filteredPosts.length === 0 && (
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400 animate-fade-in">
+            <p className="text-lg">No posts found in this category</p>
+            <p className="text-sm mt-2">Pull down to refresh or try selecting a different category</p>
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className="mt-4"
+            >
+              <RefreshCw size={16} className="mr-2" />
+              Refresh Feed
+            </Button>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</div>
 
       {/* Floating Create Button */}
       <button
@@ -346,10 +604,13 @@ export const Dashboard = ({ user, onLogout }) => {
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreatePost}
       />
+      
       <CommentModal
         isOpen={showCommentModal}
         onClose={() => setShowCommentModal(false)}
         post={selectedPost}
+        onAddComment={handleAddComment}
+        realComments={selectedPost?.realComments}
       />
     </div>
   );

@@ -10,30 +10,39 @@ import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
 import { EditProfileModal } from './components/profile/EditProfileModal';
 
+// Loading Component
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-16 h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-xl animate-bounce mx-auto mb-4">
+        <span className="text-white dark:text-black font-bold text-3xl">C</span>
+      </div>
+      <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+    </div>
+  </div>
+);
+
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const user = localStorage.getItem('connectsphere-current-user');
-  
+const ProtectedRoute = ({ children, user }) => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 };
 
 // Public Route Component (redirect if already logged in)
-const PublicRoute = ({ children }) => {
-  const user = localStorage.getItem('connectsphere-current-user');
-  
+const PublicRoute = ({ children, user }) => {
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
-  
+
   return children;
 };
 
 const AppContent = () => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { toast, setToast, showToast } = useApp();
 
@@ -41,8 +50,14 @@ const AppContent = () => {
   useEffect(() => {
     const savedUser = localStorage.getItem('connectsphere-current-user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        localStorage.removeItem('connectsphere-current-user');
+      }
     }
+    setLoading(false);
   }, []);
 
   const handleLogin = (userData) => {
@@ -69,78 +84,83 @@ const AppContent = () => {
     showToast('Profile updated!', 'success');
   };
 
+  // Show loading screen while checking auth
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
-            <PublicRoute>
+            <PublicRoute user={user}>
               <LandingPage />
             </PublicRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/login" 
+
+        <Route
+          path="/login"
           element={
-            <PublicRoute>
+            <PublicRoute user={user}>
               <LoginPage onLogin={handleLogin} />
             </PublicRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/signup" 
+
+        <Route
+          path="/signup"
           element={
-            <PublicRoute>
+            <PublicRoute user={user}>
               <SignupPage onSignup={handleSignup} />
             </PublicRoute>
-          } 
+          }
         />
 
         {/* Protected Routes */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute user={user}>
               <Dashboard user={user} onLogout={handleLogout} />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/profile" 
+
+        <Route
+          path="/profile"
           element={
-            <ProtectedRoute>
-              <ProfilePage 
-                user={user} 
-                onEditProfile={() => setShowEditProfile(true)} 
+            <ProtectedRoute user={user}>
+              <ProfilePage
+                user={user}
+                onEditProfile={() => setShowEditProfile(true)}
               />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/profile/:username" 
+
+        <Route
+          path="/profile/:username"
           element={
-            <ProtectedRoute>
-              <ProfilePage 
-                user={user} 
-                onEditProfile={() => setShowEditProfile(true)} 
+            <ProtectedRoute user={user}>
+              <ProfilePage
+                user={user}
+                onEditProfile={() => setShowEditProfile(true)}
               />
             </ProtectedRoute>
-          } 
+          }
         />
-        
-        <Route 
-          path="/search" 
+
+        <Route
+          path="/search"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute user={user}>
               <SearchPage />
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* Catch all - redirect to landing */}
