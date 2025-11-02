@@ -13,11 +13,50 @@ export const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden dark-mode-transition">
-      {/* Animated Background Blobs - Grayscale */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20 dark-mode-transition">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-gray-400 dark:bg-gray-700 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float"></div>
-        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-gray-300 dark:bg-gray-800 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute -bottom-40 right-1/3 w-96 h-96 bg-gray-500 dark:bg-gray-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl animate-float" style={{ animationDelay: '4s' }}></div>
+      {/* Morphing Blob Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {/* Primary Morphing Blob */}
+        <div 
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 morphing-blob-1 opacity-20 dark:opacity-15 transition-all duration-1000"
+          style={{
+            animation: 'morph 15s ease-in-out infinite, float 12s ease-in-out infinite'
+          }}
+        />
+        
+        {/* Secondary Morphing Blob */}
+        <div 
+          className="absolute top-1/2 -right-32 w-80 h-80 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 morphing-blob-2 opacity-25 dark:opacity-10 transition-all duration-1000"
+          style={{
+            animation: 'morph 12s ease-in-out infinite reverse, float 10s ease-in-out infinite',
+            animationDelay: '2s'
+          }}
+        />
+        
+        {/* Tertiary Morphing Blob */}
+        <div 
+          className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900 morphing-blob-3 opacity-15 dark:opacity-20 transition-all duration-1000"
+          style={{
+            animation: 'morph 18s ease-in-out infinite, float 14s ease-in-out infinite',
+            animationDelay: '4s'
+          }}
+        />
+        
+        {/* Additional floating elements */}
+        <div 
+          className="absolute top-1/3 right-1/4 w-24 h-24 bg-gray-400 dark:bg-gray-600 rounded-full opacity-10"
+          style={{
+            animation: 'float 8s ease-in-out infinite',
+            animationDelay: '1s'
+          }}
+        />
+        
+        <div 
+          className="absolute bottom-1/3 left-1/4 w-16 h-16 bg-gray-500 dark:bg-gray-500 rounded-full opacity-15"
+          style={{
+            animation: 'float 6s ease-in-out infinite reverse',
+            animationDelay: '3s'
+          }}
+        />
       </div>
 
       {/* Navbar */}
@@ -157,48 +196,64 @@ export const LandingPage = () => {
                 icon: Zap,
                 title: 'Real-Time Updates',
                 desc: 'Stay connected with instant notifications and live updates from your network',
+                blobColor: 'from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700'
               },
               {
                 icon: Users,
                 title: 'Rich Media Sharing',
                 desc: 'Share photos, videos, and content with beautiful, responsive layouts',
+                blobColor: 'from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600'
               },
               {
                 icon: Bell,
                 title: 'Smart Notifications',
                 desc: 'Never miss important updates with intelligent notification system',
+                blobColor: 'from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800'
               },
               {
                 icon: TrendingUp,
                 title: 'Trending Content',
                 desc: 'Discover what\'s popular and join conversations that matter',
+                blobColor: 'from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700'
               },
               {
                 icon: Sparkles,
                 title: 'Beautiful Design',
                 desc: 'Enjoy a modern, intuitive interface that works on all devices',
+                blobColor: 'from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600'
               },
               {
                 icon: Users,
                 title: 'Community First',
                 desc: 'Build meaningful connections and engage with like-minded people',
+                blobColor: 'from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800'
               },
             ].map((feature, i) => {
               const Icon = feature.icon;
               return (
                 <div
                   key={i}
-                  className={`scroll-reveal group bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover-lift stagger-${i + 1}`}
+                  className={`scroll-reveal group bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 hover-lift stagger-${i + 1} relative overflow-hidden`}
                 >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                    <Icon className="text-white dark:text-black" size={28} />
+                  {/* Mini Morphing Blob behind icon */}
+                  <div 
+                    className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-r ${feature.blobColor} morphing-blob opacity-10 group-hover:opacity-20 transition-opacity duration-500`}
+                    style={{
+                      animation: `morph ${8 + i * 2}s ease-in-out infinite`
+                    }}
+                  />
+                  
+                  <div className="relative z-10">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                      <Icon className="text-white dark:text-black" size={28} />
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold mb-3 text-black dark:text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                      {feature.desc}
+                    </p>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold mb-3 text-black dark:text-white">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                    {feature.desc}
-                  </p>
                 </div>
               );
             })}
@@ -206,20 +261,45 @@ export const LandingPage = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="relative py-12 sm:py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="scroll-reveal animated-gradient rounded-3xl p-8 sm:p-12 shadow-2xl text-center">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
+      {/* CTA Section with Morphing Background */}
+      <div className="relative py-12 sm:py-20 px-4 overflow-hidden">
+        {/* Background Blobs for CTA */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div 
+            className="absolute top-1/2 left-1/4 w-64 h-64 bg-gradient-to-r from-gray-700 to-gray-800 rounded-full opacity-10 morphing-blob"
+            style={{
+              animation: 'morph 10s ease-in-out infinite, float 8s ease-in-out infinite'
+            }}
+          />
+          <div 
+            className="absolute bottom-1/4 right-1/3 w-48 h-48 bg-gradient-to-r from-gray-600 to-gray-700 rounded-full opacity-15 morphing-blob"
+            style={{
+              animation: 'morph 8s ease-in-out infinite reverse, float 6s ease-in-out infinite',
+              animationDelay: '3s'
+            }}
+          />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="scroll-reveal animated-gradient rounded-3xl p-8 sm:p-12 shadow-2xl text-center relative overflow-hidden">
+            {/* Overlay morphing blob */}
+            <div 
+              className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full morphing-blob"
+              style={{
+                animation: 'morph 15s ease-in-out infinite'
+              }}
+            />
+            
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 relative z-10">
               Ready to Get Started?
             </h2>
-            <p className="text-base sm:text-lg text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto relative z-10">
               Join thousands of users already connecting, sharing, and inspiring on ConnectSphere
             </p>
             <Button 
               onClick={() => navigate('/signup')}
               size="lg"
-              className="bg-black text-black hover:bg-gray-100 hover:text-black hover:shadow-2xl w-full sm:w-auto"
+              className="bg-black text-white hover:bg-gray-800 hover:shadow-2xl w-full sm:w-auto relative z-10 ripple-button"
             >
               Create Free Account
             </Button>
