@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { useApp } from '../context/AppContext';
+import { ConnectSphereLoader } from '../components/common/CLogoLoader';
 
 export const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export const LoginPage = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const { findUser, showToast } = useApp();
   const navigate = useNavigate();
 
@@ -34,15 +36,24 @@ export const LoginPage = ({ onLogin }) => {
       const user = findUser(email, password);
       
       if (user) {
-        onLogin(user);
-        navigate('/dashboard');
+        setShowLoader(true); // Show loader before navigating
+        // Wait for loader to complete (3 seconds)
+        setTimeout(() => {
+          onLogin(user);
+          navigate('/dashboard');
+        }, 3000);
       } else {
         setErrors({ email: 'Invalid email or password. Please sign up first.' });
         showToast('Account not found. Please sign up first.', 'error');
+        setLoading(false);
       }
-      setLoading(false);
     }, 800);
   };
+
+  // Show loader overlay
+  if (showLoader) {
+    return <ConnectSphereLoader />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-black">

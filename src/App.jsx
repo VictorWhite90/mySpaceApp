@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { Toast } from './components/common/Toast';
+import { ConnectSphereLoader } from './components/common/CLogoLoader';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
@@ -43,6 +44,7 @@ const PublicRoute = ({ children, user }) => {
 const AppContent = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showInitialLoader, setShowInitialLoader] = useState(true);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { toast, setToast, showToast } = useApp();
 
@@ -83,6 +85,13 @@ const AppContent = () => {
     localStorage.setItem('connectsphere-current-user', JSON.stringify(updatedUser));
     showToast('Profile updated!', 'success');
   };
+
+  // Show initial loader on first visit
+  if (showInitialLoader) {
+    return (
+      <ConnectSphereLoader onComplete={() => setShowInitialLoader(false)} />
+    );
+  }
 
   // Show loading screen while checking auth
   if (loading) {
@@ -195,13 +204,3 @@ function App() {
 }
 
 export default App;
-
-
-
-
-
-
-
-
-
-

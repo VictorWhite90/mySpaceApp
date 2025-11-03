@@ -32,7 +32,7 @@ export const Dashboard = ({ user, onLogout }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
-  
+
   const { showToast, darkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
 
@@ -76,9 +76,9 @@ export const Dashboard = ({ user, onLogout }) => {
   const loadPosts = async (pageNum = 1, isNew = false) => {
     try {
       console.log('🔄 Loading posts...');
-      
+
       const allPosts = await fetchAllNewsFeed();
-      
+
       // Sort by timestamp
       const sortedPosts = allPosts
         .filter(post => post && post.timestamp)
@@ -95,7 +95,7 @@ export const Dashboard = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('❌ Error loading posts:', error);
-      
+
       // Provide fallback data
       const fallbackPosts = getFallbackPosts();
       showToast('Using demo data - API might be limited', 'warning');
@@ -105,13 +105,15 @@ export const Dashboard = ({ user, onLogout }) => {
 
   // Add this fallback function
   const getFallbackPosts = () => {
-    const categories = ['tech', 'sports', 'crypto'];
+    const categories = ['tech', 'sports', 'crypto', 'music', 'nigeria'];
     const categoryNames = {
       tech: 'Technology News',
-      sports: 'Sports Updates', 
-      crypto: 'Crypto Markets'
+      sports: 'Sports Updates',
+      crypto: 'Crypto Markets',
+      music: 'Music News',
+      nigeria: 'Nigeria News'
     };
-    
+
     return Array.from({ length: 15 }, (_, i) => {
       const category = categories[i % categories.length];
       return {
@@ -170,8 +172,8 @@ export const Dashboard = ({ user, onLogout }) => {
     try {
       // Fetch real comments for this post
       const realComments = await fetchRealComments(post.id);
-      const postWithComments = { 
-        ...post, 
+      const postWithComments = {
+        ...post,
         realComments,
         liked: post.liked || false,
         comments: post.comments || 0,
@@ -182,8 +184,8 @@ export const Dashboard = ({ user, onLogout }) => {
     } catch (error) {
       console.error('Error fetching comments:', error);
       // Still show modal with fallback comments
-      const postWithFallback = { 
-        ...post, 
+      const postWithFallback = {
+        ...post,
         realComments: [],
         liked: post.liked || false,
         comments: post.comments || 0,
@@ -194,19 +196,19 @@ export const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const filteredPosts = activeCategory === 'all' 
-    ? posts 
+  const filteredPosts = activeCategory === 'all'
+    ? posts
     : posts.filter(post => post.category === activeCategory);
 
   const handleLike = (postId) => {
     setPosts((prev) =>
       prev.map((post) =>
         post.id === postId
-          ? { 
-              ...post, 
-              liked: !post.liked, 
-              likes: post.liked ? (post.likes - 1) : (post.likes + 1) 
-            }
+          ? {
+            ...post,
+            liked: !post.liked,
+            likes: post.liked ? (post.likes - 1) : (post.likes + 1)
+          }
           : post
       )
     );
@@ -215,10 +217,10 @@ export const Dashboard = ({ user, onLogout }) => {
   const handleCreatePost = (newPost) => {
     const post = {
       id: `user_${Date.now()}`,
-      user: { 
-        name: user.name, 
-        username: user.username, 
-        avatar: user.avatar 
+      user: {
+        name: user.name,
+        username: user.username,
+        avatar: user.avatar
       },
       text: newPost.text,
       image: newPost.image,
@@ -296,23 +298,23 @@ export const Dashboard = ({ user, onLogout }) => {
             </div>
 
             {/* Category Filters & Refresh */}
+            {/* Category Filters & Refresh - Desktop */}
             <div className="hidden md:flex items-center gap-4">
               <div className="flex gap-2">
-                {['all', 'tech', 'sports', 'crypto'].map(category => (
+                {['all', 'tech', 'sports', 'crypto'].map(category => ( // ← REPLACE THIS LINE
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
-                    className={`px-3 py-1 rounded-full text-sm capitalize transition-all ${
-                      activeCategory === category
+                    className={`px-3 py-1 rounded-full text-sm capitalize transition-all ${activeCategory === category
                         ? 'bg-blue-600 text-white shadow-lg'
                         : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
-                    }`}
+                      }`}
                   >
                     {category}
                   </button>
                 ))}
               </div>
-              
+
               <button
                 onClick={handleRefresh}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all"
@@ -412,17 +414,17 @@ export const Dashboard = ({ user, onLogout }) => {
           </div>
 
           {/* Category Filters (Mobile) */}
+          {/* Category Filters (Mobile) */}
           <div className="md:hidden flex items-center gap-4 pb-4">
             <div className="flex gap-2 overflow-x-auto flex-1">
-              {['all', 'tech', 'sports', 'crypto'].map(category => (
+              {['all', 'tech', 'sports', 'crypto'].map(category => ( // ← REPLACE THIS LINE TOO
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`px-3 py-1 rounded-full text-sm capitalize whitespace-nowrap transition-all ${
-                    activeCategory === category
+                  className={`px-3 py-1 rounded-full text-sm capitalize whitespace-nowrap transition-all ${activeCategory === category
                       ? 'bg-blue-600 text-white shadow-lg'
                       : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
-                  }`}
+                    }`}
                 >
                   {category}
                 </button>
@@ -499,9 +501,8 @@ export const Dashboard = ({ user, onLogout }) => {
       <div className="max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-24">
         <div className="relative">
           {/* Pull to Refresh Indicator */}
-          <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
-            loadingNew ? 'opacity-100' : 'opacity-0'
-          }`}>
+          <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${loadingNew ? 'opacity-100' : 'opacity-0'
+            }`}>
             <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-3 flex items-center gap-3 border border-gray-200 dark:border-gray-700">
               <RefreshCw size={18} className={`text-blue-600 ${loadingNew ? 'animate-spin' : ''}`} />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -530,8 +531,8 @@ export const Dashboard = ({ user, onLogout }) => {
             <>
               <div className="space-y-4 min-h-screen">
                 {filteredPosts.map((post) => (
-                  <div 
-                    key={post.id} 
+                  <div
+                    key={post.id}
                     className="scroll-reveal cursor-pointer transform hover:scale-[1.01] transition-transform duration-200"
                     onClick={() => handlePostClick(post)}
                   >
@@ -600,7 +601,7 @@ export const Dashboard = ({ user, onLogout }) => {
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreatePost}
       />
-      
+
       <CommentModal
         isOpen={showCommentModal}
         onClose={() => setShowCommentModal(false)}
