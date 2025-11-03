@@ -1,3 +1,4 @@
+// src/components/dashboard/Dashboard.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, User, LogOut, Plus, Moon, Sun, ChevronDown, Menu, X, RefreshCw, Sparkles } from 'lucide-react';
@@ -8,8 +9,14 @@ import { NotificationsDropdown } from '../components/notifications/Notifications
 import { PostSkeleton } from '../components/common/PostSkeleton';
 import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
-import { fetchRealTechNews, fetchRealSportsNews, fetchRealCryptoNews, fetchRealComments } from '../utils/realDataApis';
+import { fetchAllNewsFeed, fetchRealComments } from '../utils/realDataApis';
 import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
+
+
+
+
+
+
 
 export const Dashboard = ({ user, onLogout }) => {
   const [posts, setPosts] = useState([]);
@@ -68,26 +75,63 @@ export const Dashboard = ({ user, onLogout }) => {
 
   const loadPosts = async (pageNum = 1, isNew = false) => {
     try {
-      const [techPosts, sportsPosts, cryptoPosts] = await Promise.all([
-        fetchRealTechNews(),
-        fetchRealSportsNews(),
-        fetchRealCryptoNews()
-      ]);
-
-      const allPosts = [...techPosts, ...sportsPosts, ...cryptoPosts]
+      console.log('🔄 Loading posts...');
+      
+      const allPosts = await fetchAllNewsFeed();
+      
+      // Sort by timestamp
+      const sortedPosts = allPosts
+        .filter(post => post && post.timestamp)
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      console.log(`✅ Loaded ${sortedPosts.length} posts`);
 
       // For new feeds or first load, return fresh posts
       if (isNew || pageNum === 1) {
-        return allPosts.slice(0, 20);
+        return sortedPosts.slice(0, 20);
       } else {
         // For load more, return additional posts
-        return allPosts.slice(0, 20 * pageNum);
+        return sortedPosts.slice(0, 20 * pageNum);
       }
     } catch (error) {
-      console.error('Error loading posts:', error);
-      throw error;
+      console.error('❌ Error loading posts:', error);
+      
+      // Provide fallback data
+      const fallbackPosts = getFallbackPosts();
+      showToast('Using demo data - API might be limited', 'warning');
+      return fallbackPosts.slice(0, 20);
     }
+  };
+
+  // Add this fallback function
+  const getFallbackPosts = () => {
+    const categories = ['tech', 'sports', 'crypto'];
+    const categoryNames = {
+      tech: 'Technology News',
+      sports: 'Sports Updates', 
+      crypto: 'Crypto Markets'
+    };
+    
+    return Array.from({ length: 15 }, (_, i) => {
+      const category = categories[i % categories.length];
+      return {
+        id: `fallback_${i}_${Date.now()}`,
+        user: {
+          name: categoryNames[category],
+          username: `${category}_updates`,
+          avatar: `https://i.pravatar.cc/150?img=${i + 1}`
+        },
+        text: `Sample ${category} post ${i + 1}`,
+        content: `This is sample content for ${category} category. The API might be rate limited or experiencing issues.`,
+        image: `https://picsum.photos/seed/${category}${i}/600/400`,
+        likes: Math.floor(Math.random() * 100) + 10,
+        comments: Math.floor(Math.random() * 20) + 1,
+        timestamp: new Date(Date.now() - i * 30 * 60 * 1000),
+        category: category,
+        source: 'Sample Source',
+        liked: false
+      };
+    });
   };
 
   const loadMorePosts = async () => {
@@ -97,7 +141,7 @@ export const Dashboard = ({ user, onLogout }) => {
       const newPosts = await loadPosts(nextPage);
       setPosts(newPosts);
       setPage(nextPage);
-      // Simple hasMore logic - if we got less than expected, assume no more
+      // Simple hasMore logic
       setHasMore(newPosts.length >= 20 * nextPage);
     } catch (error) {
       console.error('Error loading more posts:', error);
@@ -129,7 +173,6 @@ export const Dashboard = ({ user, onLogout }) => {
       const postWithComments = { 
         ...post, 
         realComments,
-        // Ensure post has all required properties
         liked: post.liked || false,
         comments: post.comments || 0,
         likes: post.likes || 0
@@ -215,6 +258,13 @@ export const Dashboard = ({ user, onLogout }) => {
       text: 'liked your post',
       timestamp: new Date(Date.now() - 1800000),
       read: false,
+    },
+    {
+      id: 2,
+      user: { name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/150?img=2' },
+      text: 'commented on your post',
+      timestamp: new Date(Date.now() - 3600000),
+      read: true,
     }
   ];
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -445,149 +495,95 @@ export const Dashboard = ({ user, onLogout }) => {
         </div>
       </nav>
 
-    <div className="max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-24">
-  {/* Pull to Refresh Container */}
-  <div className="relative">
-    {/* Pull Indicator */}
-    <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
-      loadingNew ? 'opacity-100' : 'opacity-0'
-    }`}>
-      <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-3 flex items-center gap-3 border border-gray-200 dark:border-gray-700">
-        <RefreshCw size={18} className={`text-blue-600 ${loadingNew ? 'animate-spin' : ''}`} />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {loadingNew ? 'Loading new feeds...' : 'Release to refresh'}
-        </span>
-      </div>
-    </div>
-
-    {/* Pull to Refresh Hint */}
-    {!loadingNew && filteredPosts.length > 0 && (
-      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center">
-        <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-          <Sparkles size={12} />
-          <span>Pull down to refresh</span>
-        </div>
-      </div>
-    )}
-
-    {loading ? (
-      <div className="space-y-4">
-        <PostSkeleton />
-        <PostSkeleton />
-        <PostSkeleton />
-      </div>
-    ) : (
-      <>
-        <div 
-          className="space-y-4 min-h-screen"
-          ref={(el) => {
-            if (el) {
-              let startY = 0;
-              let currentY = 0;
-              
-              const handleTouchStart = (e) => {
-                // Only trigger when at the top of the page
-                if (window.scrollY === 0 && !loadingNew) {
-                  startY = e.touches[0].clientY;
-                  el.dataset.pulling = 'true';
-                }
-              };
-              
-              const handleTouchMove = (e) => {
-                if (el.dataset.pulling === 'true' && !loadingNew) {
-                  currentY = e.touches[0].clientY;
-                  const pullDistance = currentY - startY;
-                  
-                  // Show visual feedback when pulling
-                  if (pullDistance > 50) {
-                    el.style.transform = `translateY(${Math.min(pullDistance, 100)}px)`;
-                  }
-                  
-                  // Trigger refresh when pulled enough
-                  if (pullDistance > 120) {
-                    loadNewFeeds();
-                    el.dataset.pulling = 'false';
-                    el.style.transform = 'translateY(0px)';
-                  }
-                }
-              };
-              
-              const handleTouchEnd = () => {
-                if (el.dataset.pulling === 'true') {
-                  el.dataset.pulling = 'false';
-                  el.style.transform = 'translateY(0px)';
-                }
-              };
-              
-              // Add event listeners
-              el.addEventListener('touchstart', handleTouchStart);
-              el.addEventListener('touchmove', handleTouchMove);
-              el.addEventListener('touchend', handleTouchEnd);
-              
-              // Cleanup function
-              return () => {
-                el.removeEventListener('touchstart', handleTouchStart);
-                el.removeEventListener('touchmove', handleTouchMove);
-                el.removeEventListener('touchend', handleTouchEnd);
-              };
-            }
-          }}
-        >
-          {filteredPosts.map((post) => (
-            <div 
-              key={post.id} 
-              className="scroll-reveal cursor-pointer transform hover:scale-[1.01] transition-transform duration-200"
-              onClick={() => handlePostClick(post)}
-            >
-              <Post
-                post={post}
-                onLike={handleLike}
-                onComment={(post) => {
-                  setSelectedPost(post);
-                  setShowCommentModal(true);
-                }}
-                clickable={true}
-              />
+      {/* Main Content */}
+      <div className="max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-24">
+        <div className="relative">
+          {/* Pull to Refresh Indicator */}
+          <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
+            loadingNew ? 'opacity-100' : 'opacity-0'
+          }`}>
+            <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-3 flex items-center gap-3 border border-gray-200 dark:border-gray-700">
+              <RefreshCw size={18} className={`text-blue-600 ${loadingNew ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {loadingNew ? 'Loading new feeds...' : 'Release to refresh'}
+              </span>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Load More Button */}
-        {hasMore && filteredPosts.length > 0 && (
-          <div className="text-center py-8 scroll-reveal">
-            <Button
-              onClick={loadMorePosts}
-              variant="outline"
-              className="hover-lift min-w-32"
-              disabled={loadingMore}
-            >
-              {loadingMore ? (
-                <RefreshCw size={18} className="animate-spin" />
-              ) : (
-                'Load More'
+          {/* Pull to Refresh Hint */}
+          {!loadingNew && filteredPosts.length > 0 && (
+            <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center">
+              <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                <Sparkles size={12} />
+                <span>Pull down to refresh</span>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="space-y-4">
+              <PostSkeleton />
+              <PostSkeleton />
+              <PostSkeleton />
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 min-h-screen">
+                {filteredPosts.map((post) => (
+                  <div 
+                    key={post.id} 
+                    className="scroll-reveal cursor-pointer transform hover:scale-[1.01] transition-transform duration-200"
+                    onClick={() => handlePostClick(post)}
+                  >
+                    <Post
+                      post={post}
+                      onLike={handleLike}
+                      onComment={(post) => {
+                        setSelectedPost(post);
+                        setShowCommentModal(true);
+                      }}
+                      clickable={true}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              {hasMore && filteredPosts.length > 0 && (
+                <div className="text-center py-8 scroll-reveal">
+                  <Button
+                    onClick={loadMorePosts}
+                    variant="outline"
+                    className="hover-lift min-w-32"
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <RefreshCw size={18} className="animate-spin" />
+                    ) : (
+                      'Load More'
+                    )}
+                  </Button>
+                </div>
               )}
-            </Button>
-          </div>
-        )}
 
-        {filteredPosts.length === 0 && (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400 animate-fade-in">
-            <p className="text-lg">No posts found in this category</p>
-            <p className="text-sm mt-2">Pull down to refresh or try selecting a different category</p>
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              className="mt-4"
-            >
-              <RefreshCw size={16} className="mr-2" />
-              Refresh Feed
-            </Button>
-          </div>
-        )}
-      </>
-    )}
-  </div>
-</div>
+              {filteredPosts.length === 0 && (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400 animate-fade-in">
+                  <p className="text-lg">No posts found in this category</p>
+                  <p className="text-sm mt-2">Pull down to refresh or try selecting a different category</p>
+                  <Button
+                    onClick={handleRefresh}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    <RefreshCw size={16} className="mr-2" />
+                    Refresh Feed
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Floating Create Button */}
       <button
