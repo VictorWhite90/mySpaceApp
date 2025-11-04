@@ -4,6 +4,9 @@ import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { useApp } from '../context/AppContext';
 import { ConnectSphereLoader } from '../components/common/CLogoLoader';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
 
 export const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -12,7 +15,7 @@ export const LoginPage = ({ onLogin }) => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
-  const { findUser, showToast } = useApp();
+  const { showToast } = useApp();
   const navigate = useNavigate();
 
   const validate = () => {
@@ -23,7 +26,7 @@ export const LoginPage = ({ onLogin }) => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -32,25 +35,51 @@ export const LoginPage = ({ onLogin }) => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      const user = findUser(email, password);
+    try {
+      // 1. Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Get user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
       
-      if (user) {
-        setShowLoader(true); // Show loader before navigating
+      if (userDoc.exists()) {
+        const userData = { ...userDoc.data(), uid: user.uid };
+        
+        setShowLoader(true);
+        
         // Wait for loader to complete (3 seconds)
         setTimeout(() => {
-          onLogin(user);
+          onLogin(userData);
           navigate('/dashboard');
         }, 3000);
       } else {
-        setErrors({ email: 'Invalid email or password. Please sign up first.' });
-        showToast('Account not found. Please sign up first.', 'error');
-        setLoading(false);
+        throw new Error('User data not found');
       }
-    }, 800);
+      
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error.code === 'auth/invalid-credential') {
+        setErrors({ email: 'Invalid email or password.' });
+        showToast('Invalid email or password. Please try again.', 'error');
+      } else if (error.code === 'auth/user-not-found') {
+        setErrors({ email: 'Account not found. Please sign up first.' });
+        showToast('Account not found. Please sign up first.', 'error');
+      } else if (error.code === 'auth/wrong-password') {
+        setErrors({ password: 'Incorrect password.' });
+        showToast('Incorrect password. Please try again.', 'error');
+      } else if (error.code === 'auth/too-many-requests') {
+        setErrors({ email: 'Too many failed attempts. Please try again later.' });
+        showToast('Too many failed attempts. Please try again later.', 'error');
+      } else {
+        setErrors({ email: 'Login failed. Please try again.' });
+        showToast('Login failed. Please try again.', 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Show loader overlay
   if (showLoader) {
     return <ConnectSphereLoader />;
   }

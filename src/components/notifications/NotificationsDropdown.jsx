@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { formatTimestamp } from '../../utils/helpers';
 
-export const NotificationsDropdown = ({ isOpen, onClose, notifications, onMarkRead }) => {
+export const NotificationsDropdown = ({ isOpen, onClose, notifications }) => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -10,12 +10,13 @@ export const NotificationsDropdown = ({ isOpen, onClose, notifications, onMarkRe
         onClose();
       }
     };
+    
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      onMarkRead();
     }
+    
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose, onMarkRead]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

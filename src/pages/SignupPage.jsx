@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { useApp } from '../context/AppContext';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
 
 export const SignupPage = ({ onSignup }) => {
   const [formData, setFormData] = useState({ 
@@ -11,9 +14,11 @@ export const SignupPage = ({ onSignup }) => {
     password: '', 
     confirmPassword: '' 
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { showToast, registerUser, users } = useApp();
+  const { showToast } = useApp();
   const navigate = useNavigate();
 
   const validate = () => {
@@ -21,10 +26,6 @@ export const SignupPage = ({ onSignup }) => {
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    
-    if (users.find(u => u.email === formData.email)) {
-      newErrors.email = 'Email already registered. Please login instead.';
-    }
     
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
@@ -34,7 +35,7 @@ export const SignupPage = ({ onSignup }) => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -43,24 +44,49 @@ export const SignupPage = ({ onSignup }) => {
     }
     
     setLoading(true);
-    setTimeout(() => {
+    try {
+      // 1. Create user with Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth, 
+        formData.email, 
+        formData.password
+      );
+      const user = userCredential.user;
+
+      // 2. Store user data in Firestore
       const userData = { 
         name: formData.name.trim(), 
-        email: formData.email, 
-        password: formData.password,
+        email: formData.email,
         username: formData.name.toLowerCase().replace(/\s+/g, ''),
         avatar: `https://i.pravatar.cc/150?u=${formData.email}`,
         bio: '',
         location: '',
-        website: ''
+        website: '',
+        uid: user.uid,
+        createdAt: new Date()
       };
       
-      registerUser(userData);
+      await setDoc(doc(db, 'users', user.uid), userData);
+      
+      // 3. Success
       showToast('Account created successfully!', 'success');
       onSignup(userData);
       navigate('/dashboard');
+      
+    } catch (error) {
+      console.error('Signup error:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        setErrors({ email: 'Email already registered. Please login instead.' });
+      } else if (error.code === 'auth/weak-password') {
+        setErrors({ password: 'Password is too weak.' });
+      } else if (error.code === 'auth/invalid-email') {
+        setErrors({ email: 'Invalid email address.' });
+      } else {
+        showToast('Failed to create account. Please try again.', 'error');
+      }
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -103,25 +129,45 @@ export const SignupPage = ({ onSignup }) => {
               autoComplete="email"
             />
             
-            <Input
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              error={errors.password}
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
-            
-            <Input
-              label="Confirm Password"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              error={errors.confirmPassword}
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
+            {/* Password with eye icon */}
+            <div className="relative">
+              <Input
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                error={errors.password}
+                placeholder="••••••••"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+
+            {/* Confirm Password with eye icon */}
+            <div className="relative">
+              <Input
+                label="Confirm Password"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                error={errors.confirmPassword}
+                placeholder="••••••••"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                {showConfirmPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
 
             <Button 
               type="submit" 

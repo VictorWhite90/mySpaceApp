@@ -7,10 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node modules and build outputs
 node_modules
 dist
 dist-ssr
 *.local
+
+# Environment variables (important!)
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Firebase cache or config files (optional)
+.firebase/
+.firebaserc

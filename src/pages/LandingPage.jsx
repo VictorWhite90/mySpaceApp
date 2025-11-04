@@ -15,7 +15,7 @@ export const LandingPage = () => {
     <div ref={scrollRevealRef} className="min-h-screen bg-white dark:bg-black relative overflow-hidden dark-mode-transition">
       {/* Morphing Blob Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        {/* Primary Morphing Blob */}
+        {/* Primary Morphing Blob */} 
         <div
           className="absolute top-1/4 -left-20 w-96 h-96 bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 morphing-blob-1 opacity-20 dark:opacity-15 transition-all duration-1000"
           style={{

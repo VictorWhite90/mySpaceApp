@@ -1,3 +1,4 @@
+// src/context/AppContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
@@ -16,20 +17,23 @@ export const AppProvider = ({ children }) => {
   });
   
   const [toast, setToast] = useState(null);
-  
-  // Store registered users in localStorage
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem('connectsphere-users');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Apply dark mode to document
+  // FIXED: Apply dark mode to document - THIS IS THE CRITICAL FIX
   useEffect(() => {
+    console.log('🎯 AppContext: Applying dark mode:', darkMode);
+    
     if (darkMode) {
       document.documentElement.classList.add('dark');
+      console.log('✅ Added "dark" class to html');
     } else {
       document.documentElement.classList.remove('dark');
+      console.log('✅ Removed "dark" class from html');
     }
+    
     localStorage.setItem('connectsphere-darkmode', JSON.stringify(darkMode));
   }, [darkMode]);
 
@@ -43,6 +47,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const toggleDarkMode = () => {
+    console.log('🔄 AppContext: Toggling dark mode from', darkMode, 'to', !darkMode);
     setDarkMode(prev => !prev);
   };
 

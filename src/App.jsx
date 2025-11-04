@@ -10,6 +10,9 @@ import { Dashboard } from './pages/Dashboard';
 import { ProfilePage } from './pages/ProfilePage';
 import { SearchPage } from './pages/SearchPage';
 import { EditProfileModal } from './components/profile/EditProfileModal';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from './firebase/config';
 
 // Loading Component
 const LoadingScreen = () => (
@@ -48,42 +51,84 @@ const AppContent = () => {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { toast, setToast, showToast } = useApp();
 
-  // Load user from localStorage on mount
+  // Firebase Auth State Listener - REPLACED localStorage
   useEffect(() => {
-    const savedUser = localStorage.getItem('connectsphere-current-user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing user data:', error);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in with Firebase
+        try {
+          console.log('🔄 Firebase user detected:', firebaseUser.uid);
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = { ...userDoc.data(), uid: firebaseUser.uid };
+            console.log('✅ User data loaded from Firestore:', userData);
+            setUser(userData);
+            
+            // Keep localStorage for backward compatibility during transition
+            localStorage.setItem('connectsphere-current-user', JSON.stringify(userData));
+          } else {
+            console.log('❌ User document not found in Firestore');
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error loading user data from Firestore:', error);
+          setUser(null);
+        }
+      } else {
+        // User is signed out
+        console.log('🚪 User signed out');
+        setUser(null);
         localStorage.removeItem('connectsphere-current-user');
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleLogin = (userData) => {
     setUser(userData);
-    localStorage.setItem('connectsphere-current-user', JSON.stringify(userData));
+    // Firebase handles persistence automatically
     showToast('Welcome back!', 'success');
   };
 
   const handleSignup = (userData) => {
     setUser(userData);
-    localStorage.setItem('connectsphere-current-user', JSON.stringify(userData));
+    // Firebase handles persistence automatically
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('connectsphere-current-user');
-    showToast('Logged out successfully', 'success');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      localStorage.removeItem('connectsphere-current-user');
+      showToast('Logged out successfully', 'success');
+    } catch (error) {
+      console.error('Logout error:', error);
+      showToast('Error during logout', 'error');
+    }
   };
 
-  const handleProfileUpdate = (updates) => {
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    localStorage.setItem('connectsphere-current-user', JSON.stringify(updatedUser));
-    showToast('Profile updated!', 'success');
+  const handleProfileUpdate = async (updates) => {
+    try {
+      if (!user?.uid) {
+        throw new Error('No user UID available');
+      }
+
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      
+      // Update in Firestore
+      await updateDoc(doc(db, 'users', user.uid), updates);
+      
+      // Update localStorage for backward compatibility
+      localStorage.setItem('connectsphere-current-user', JSON.stringify(updatedUser));
+      
+      showToast('Profile updated!', 'success');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      showToast('Error updating profile', 'error');
+    }
   };
 
   // Show initial loader on first visit
