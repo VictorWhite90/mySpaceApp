@@ -1,7 +1,7 @@
 // src/components/dashboard/Dashboard.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, User, LogOut, Plus, Moon, Sun, ChevronDown, Menu, X, RefreshCw, Sparkles } from 'lucide-react';
+import { Search, Bell, User, LogOut, Plus, Moon, Sun, ChevronDown, Menu, X, RefreshCw, Sparkles, ExternalLink } from 'lucide-react';
 import { Post } from '../components/post/Post';
 import { CreatePostModal } from '../components/post/CreatePostModal';
 import { CommentModal } from '../components/post/CommentModal';
@@ -11,8 +11,6 @@ import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
 import { fetchAllNewsFeed, fetchRealComments } from '../utils/realDataApis';
 import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
-
-
 
 export const Dashboard = ({ user, onLogout }) => {
   const [posts, setPosts] = useState([]);
@@ -28,49 +26,46 @@ export const Dashboard = ({ user, onLogout }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [error, setError] = useState(null);
+  
   const { showToast, darkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
+  const scrollContainerRef = useRef(null);
+  const lastFetchTime = useRef(Date.now());
+  const lastPostsSnapshot = useRef([]);
 
   useScrollReveal();
 
+  // Lock body scroll when modal is open
   useEffect(() => {
-    if (user) {
-      loadInitialData();
+    if (showCommentModal) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
     }
-  }, [user]);
 
-  const loadInitialData = async () => {
-    setLoading(true);
-    setPage(1);
-    try {
-      const initialPosts = await loadPosts(1);
-      setPosts(initialPosts);
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-      showToast('Error loading posts', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      // Cleanup on unmount
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+    };
+  }, [showCommentModal]);
 
-  const loadNewFeeds = async () => {
-    setLoadingNew(true);
-    setPage(1);
-    try {
-      const newPosts = await loadPosts(1, true);
-      setPosts(newPosts);
-      showToast('New feeds loaded!', 'success');
-    } catch (error) {
-      console.error('Error loading new feeds:', error);
-      showToast('Error loading new feeds', 'error');
-    } finally {
-      setLoadingNew(false);
-    }
-  };
-
-  const loadPosts = async (pageNum = 1, isNew = false) => {
+  // Memoized load posts function
+  const loadPosts = useCallback(async (pageNum = 1, isNew = false) => {
     try {
       console.log('🔄 Loading posts...');
+      setError(null);
 
       const allPosts = await fetchAllNewsFeed();
 
@@ -90,13 +85,14 @@ export const Dashboard = ({ user, onLogout }) => {
       }
     } catch (error) {
       console.error('❌ Error loading posts:', error);
-
+      setError('Failed to load posts. Using demo data.');
+      
       // Provide fallback data
       const fallbackPosts = getFallbackPosts();
       showToast('Using demo data - API might be limited', 'warning');
       return fallbackPosts.slice(0, 20);
     }
-  };
+  }, [showToast]);
 
   const getFallbackPosts = () => {
     const categories = ['tech', 'sports', 'crypto', 'music', 'nigeria'];
@@ -125,12 +121,73 @@ export const Dashboard = ({ user, onLogout }) => {
         timestamp: new Date(Date.now() - i * 30 * 60 * 1000),
         category: category,
         source: 'Sample Source',
+        url: '#',
         liked: false
       };
     });
   };
 
+  // Initial data load
+  useEffect(() => {
+    if (user) {
+      loadInitialData();
+    }
+  }, [user]);
+
+  const loadInitialData = async () => {
+    setLoading(true);
+    setPage(1);
+    try {
+      const initialPosts = await loadPosts(1);
+      setPosts(initialPosts);
+      lastPostsSnapshot.current = initialPosts;
+      lastFetchTime.current = Date.now();
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      showToast('Error loading posts', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Pull to refresh implementation - FIXED
+  const handleRefresh = async () => {
+    // Prevent rapid refreshes
+    const timeSinceLastFetch = Date.now() - lastFetchTime.current;
+    if (timeSinceLastFetch < 3000) {
+      showToast('Please wait before refreshing again', 'info');
+      return;
+    }
+
+    setLoadingNew(true);
+    setPage(1);
+    try {
+      // Force fetch new data
+      const newPosts = await loadPosts(1, true);
+      
+      // Check if we got new posts
+      const hasNewContent = JSON.stringify(newPosts) !== JSON.stringify(lastPostsSnapshot.current);
+      
+      setPosts(newPosts);
+      lastPostsSnapshot.current = newPosts;
+      lastFetchTime.current = Date.now();
+      
+      if (hasNewContent) {
+        showToast('Feed updated with new content!', 'success');
+      } else {
+        showToast('You\'re all caught up!', 'info');
+      }
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+      showToast('Error refreshing posts', 'error');
+    } finally {
+      setLoadingNew(false);
+    }
+  };
+
   const loadMorePosts = async () => {
+    if (loadingMore) return;
+    
     setLoadingMore(true);
     try {
       const nextPage = page + 1;
@@ -146,22 +203,13 @@ export const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      const newPosts = await loadPosts(1, true);
-      setPosts(newPosts);
-      setPage(1);
-      showToast('Feed updated!', 'success');
-    } catch (error) {
-      console.error('Error refreshing posts:', error);
-      showToast('Error refreshing posts', 'error');
-    } finally {
-      setLoading(false);
+  // Handle post click to open comments
+  const handlePostClick = async (post, event) => {
+    // If user clicked on external link, don't open modal
+    if (event.target.closest('.external-link-btn')) {
+      return;
     }
-  };
 
-  const handlePostClick = async (post) => {
     try {
       const realComments = await fetchRealComments(post.id);
       const postWithComments = {
@@ -184,6 +232,16 @@ export const Dashboard = ({ user, onLogout }) => {
       };
       setSelectedPost(postWithFallback);
       setShowCommentModal(true);
+    }
+  };
+
+  // Open external source link
+  const handleOpenSource = (e, post) => {
+    e.stopPropagation();
+    if (post.url && post.url !== '#') {
+      window.open(post.url, '_blank', 'noopener,noreferrer');
+    } else {
+      showToast('Source URL not available', 'warning');
     }
   };
 
@@ -221,7 +279,8 @@ export const Dashboard = ({ user, onLogout }) => {
       liked: false,
       category: 'user',
       content: newPost.text,
-      source: 'Your Post'
+      source: 'Your Post',
+      url: '#'
     };
     setPosts([post, ...posts]);
     showToast('Post created successfully!', 'success');
@@ -291,7 +350,7 @@ export const Dashboard = ({ user, onLogout }) => {
             {/* Category Filters & Refresh - Desktop */}
             <div className="hidden md:flex items-center gap-4">
               <div className="flex gap-2">
-                {['all', 'tech', 'sports', 'crypto'].map(category => (
+                {['all', 'tech', 'sports', 'crypto', 'business'].map(category => (
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
@@ -308,11 +367,11 @@ export const Dashboard = ({ user, onLogout }) => {
 
               <button
                 onClick={handleRefresh}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all text-gray-900 dark:text-white"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all text-gray-900 dark:text-white disabled:opacity-50"
                 title="Refresh feed"
-                disabled={loading}
+                disabled={loading || loadingNew}
               >
-                <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                <RefreshCw size={18} className={loadingNew ? 'animate-spin' : ''} />
               </button>
             </div>
 
@@ -410,8 +469,8 @@ export const Dashboard = ({ user, onLogout }) => {
 
           {/* Category Filters (Mobile) */}
           <div className="md:hidden flex items-center gap-4 pb-4">
-            <div className="flex gap-2 overflow-x-auto flex-1">
-              {['all', 'tech', 'sports', 'crypto'].map(category => (
+            <div className="flex gap-2 overflow-x-auto flex-1 scrollbar-hide">
+              {['all', 'tech', 'sports', 'crypto', 'business'].map(category => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
@@ -427,11 +486,11 @@ export const Dashboard = ({ user, onLogout }) => {
             </div>
             <button
               onClick={handleRefresh}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-white"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
               title="Refresh feed"
-              disabled={loading}
+              disabled={loading || loadingNew}
             >
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={18} className={loadingNew ? 'animate-spin' : ''} />
             </button>
           </div>
 
@@ -486,22 +545,29 @@ export const Dashboard = ({ user, onLogout }) => {
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-24">
+      <div className="max-w-2xl mx-auto px-4 pt-32 md:pt-24 pb-24" ref={scrollContainerRef}>
         <div className="relative">
           {/* Pull to Refresh Indicator */}
-          <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 ${
+          <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 z-10 ${
             loadingNew ? 'opacity-100' : 'opacity-0'
           }`}>
             <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-3 flex items-center gap-3 border border-gray-200 dark:border-gray-700">
               <RefreshCw size={18} className={`text-blue-600 ${loadingNew ? 'animate-spin' : ''}`} />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {loadingNew ? 'Loading new feeds...' : 'Release to refresh'}
+                Loading new feeds...
               </span>
             </div>
           </div>
 
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">{error}</p>
+            </div>
+          )}
+
           {/* Pull to Refresh Hint */}
-          {!loadingNew && filteredPosts.length > 0 && (
+          {!loadingNew && !loading && filteredPosts.length > 0 && (
             <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 text-center">
               <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                 <Sparkles size={12} />
@@ -512,9 +578,9 @@ export const Dashboard = ({ user, onLogout }) => {
 
           {loading ? (
             <div className="space-y-4">
-              <PostSkeleton />
-              <PostSkeleton />
-              <PostSkeleton />
+              {[...Array(3)].map((_, i) => (
+                <PostSkeleton key={i} />
+              ))}
             </div>
           ) : (
             <>
@@ -522,8 +588,8 @@ export const Dashboard = ({ user, onLogout }) => {
                 {filteredPosts.map((post) => (
                   <div
                     key={post.id}
-                    className="cursor-pointer transform hover:scale-[1.01] transition-transform duration-200"
-                    onClick={() => handlePostClick(post)}
+                    className="group relative cursor-pointer transform hover:scale-[1.01] transition-all duration-200"
+                    onClick={(e) => handlePostClick(post, e)}
                   >
                     <Post
                       post={post}
@@ -534,6 +600,17 @@ export const Dashboard = ({ user, onLogout }) => {
                       }}
                       clickable={true}
                     />
+                    
+                    {/* External Link Button - FIXED: Always visible on mobile, shows on hover on desktop */}
+                    {post.url && post.url !== '#' && (
+                      <button
+                        onClick={(e) => handleOpenSource(e, post)}
+                        className="external-link-btn absolute top-4 right-4 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full shadow-lg sm:opacity-0 sm:group-hover:opacity-100 opacity-100 transition-opacity duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/50 border border-gray-200 dark:border-gray-700 z-10"
+                        title={`Read full article on ${post.source}`}
+                      >
+                        <ExternalLink size={16} className="text-blue-600 dark:text-blue-400" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -564,8 +641,9 @@ export const Dashboard = ({ user, onLogout }) => {
                     onClick={handleRefresh}
                     variant="outline"
                     className="mt-4"
+                    disabled={loadingNew}
                   >
-                    <RefreshCw size={16} className="mr-2" />
+                    <RefreshCw size={16} className={`mr-2 ${loadingNew ? 'animate-spin' : ''}`} />
                     Refresh Feed
                   </Button>
                 </div>
