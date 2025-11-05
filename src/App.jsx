@@ -13,6 +13,7 @@ import { EditProfileModal } from './components/profile/EditProfileModal';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase/config';
+import { createUserProfile } from './services/firebaseService';
 
 // Loading Component
 const LoadingScreen = () => (
@@ -51,40 +52,63 @@ const AppContent = () => {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const { toast, setToast, showToast } = useApp();
 
-  // Firebase Auth State Listener - REPLACED localStorage
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // User is signed in with Firebase
-        try {
-          console.log('🔄 Firebase user detected:', firebaseUser.uid);
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          if (userDoc.exists()) {
-            const userData = { ...userDoc.data(), uid: firebaseUser.uid };
-            console.log('✅ User data loaded from Firestore:', userData);
-            setUser(userData);
-            
-            // Keep localStorage for backward compatibility during transition
-            localStorage.setItem('connectsphere-current-user', JSON.stringify(userData));
-          } else {
-            console.log('❌ User document not found in Firestore');
-            setUser(null);
-          }
-        } catch (error) {
-          console.error('Error loading user data from Firestore:', error);
-          setUser(null);
-        }
-      } else {
-        // User is signed out
-        console.log('🚪 User signed out');
-        setUser(null);
-        localStorage.removeItem('connectsphere-current-user');
-      }
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
-  }, []);
+ // Firebase Auth State Listener - FIXED VERSION
+
+ 
+// Firebase Auth State Listener - FIXED VERSION
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    if (firebaseUser) {
+      try {
+        console.log('🔄 Firebase user detected:', firebaseUser.uid);
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        
+        if (userDoc.exists()) {
+          const userData = { 
+            ...userDoc.data(), 
+            uid: firebaseUser.uid,
+            id: firebaseUser.uid
+          };
+          console.log('✅ User data loaded from Firestore');
+          setUser(userData);
+          localStorage.setItem('connectsphere-current-user', JSON.stringify(userData));
+        } else {
+          console.log('📝 Creating new user document in Firestore');
+          // Create user document if it doesn't exist
+          await createUserProfile({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User'
+          });
+          
+          // Reload the user data
+          const newUserDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (newUserDoc.exists()) {
+            const userData = { 
+              ...newUserDoc.data(), 
+              uid: firebaseUser.uid,
+              id: firebaseUser.uid
+            };
+            setUser(userData);
+            localStorage.setItem('connectsphere-current-user', JSON.stringify(userData));
+            console.log('✅ New user profile created and loaded');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setUser(null);
+      }
+    } else {
+      console.log('🚪 User signed out');
+      setUser(null);
+      localStorage.removeItem('connectsphere-current-user');
+    }
+    setLoading(false);
+  });
+
+  return () => unsubscribe();
+}, []);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -184,38 +208,29 @@ const AppContent = () => {
           }
         />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute user={user}>
-              <ProfilePage
-                user={user}
-                onEditProfile={() => setShowEditProfile(true)}
-              />
-            </ProtectedRoute>
-          }
-        />
+ <Route
+  path="/profile"
+  element={
+    <ProtectedRoute user={user}>
+      <ProfilePage
+        user={user} // ✅ Just pass user directly
+        onEditProfile={() => setShowEditProfile(true)}
+      />
+    </ProtectedRoute>
+  }
+/>
 
-        <Route
-          path="/profile/:username"
-          element={
-            <ProtectedRoute user={user}>
-              <ProfilePage
-                user={user}
-                onEditProfile={() => setShowEditProfile(true)}
-              />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/search"
-          element={
-            <ProtectedRoute user={user}>
-              <SearchPage />
-            </ProtectedRoute>
-          }
-        />
+<Route
+  path="/profile/:username"
+  element={
+    <ProtectedRoute user={user}>
+      <ProfilePage
+        user={user} // ✅ Just pass user directly
+        onEditProfile={() => setShowEditProfile(true)}
+      />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Catch all - redirect to landing */}
         <Route path="*" element={<Navigate to="/" replace />} />

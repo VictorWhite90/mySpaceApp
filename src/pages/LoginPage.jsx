@@ -5,8 +5,7 @@ import { Input } from '../components/common/Input';
 import { useApp } from '../context/AppContext';
 import { ConnectSphereLoader } from '../components/common/CLogoLoader';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/config';
+import { auth } from '../firebase/config';
 
 export const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -36,26 +35,16 @@ export const LoginPage = ({ onLogin }) => {
 
     setLoading(true);
     try {
-      // 1. Sign in with Firebase Auth
+      // Just handle authentication, let App.jsx handle user data
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // 2. Get user data from Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
       
-      if (userDoc.exists()) {
-        const userData = { ...userDoc.data(), uid: user.uid };
-        
-        setShowLoader(true);
-        
-        // Wait for loader to complete (3 seconds)
-        setTimeout(() => {
-          onLogin(userData);
-          navigate('/dashboard');
-        }, 3000);
-      } else {
-        throw new Error('User data not found');
-      }
+      setShowLoader(true);
+      
+      // Wait for loader to complete (3 seconds)
+      setTimeout(() => {
+        onLogin(userCredential.user); // Just pass the basic user info
+        navigate('/dashboard');
+      }, 3000);
       
     } catch (error) {
       console.error('Login error:', error);

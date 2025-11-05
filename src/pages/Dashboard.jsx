@@ -12,6 +12,8 @@ import { useApp } from '../context/AppContext';
 import { fetchAllNewsFeed, fetchRealComments } from '../utils/realDataApis';
 import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
 
+
+
 export const Dashboard = ({ user, onLogout }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,6 @@ export const Dashboard = ({ user, onLogout }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
-
   const { showToast, darkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
 
