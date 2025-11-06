@@ -726,18 +726,18 @@ const fetchGuardianHealth = async () => {
 const fetchWebMDRSS = async () => {
   try {
     const response = await axios.get(
-      'https://api.rss2json.com/v1/api.json?rss_url=https://www.webmd.com/rss/news/default.aspx'
+      'https://api.rss2json.com/v1/api.json?rss_url=https://www.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC'
     );
     return response.data.items.slice(0, 8).map((item, index) => ({
       id: `health_webmd_${Date.now()}_${index}`,
       user: { 
         name: 'WebMD', 
         username: 'webmd', 
-        avatar: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
-      image: item.thumbnail || getRandomImage('health', index),
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('health', index),
       likes: Math.floor(Math.random() * 750) + 110,
       comments: Math.floor(Math.random() * 55) + 9,
       timestamp: new Date(item.pubDate),
@@ -755,7 +755,7 @@ const fetchWebMDRSS = async () => {
 // ============= SCIENCE NEWS =============
 export const fetchEnhancedScienceNews = async () => {
   const sources = [
-    fetchNewsAPIScience(),
+    fetchNewsAPIScience(), 
     fetchGuardianScience(),
     fetchScienceDailyRSS(),
     fetchNatureRSS()
@@ -832,20 +832,20 @@ const fetchGuardianScience = async () => {
 const fetchScienceDailyRSS = async () => {
   try {
     const response = await axios.get(
-      'https://api.rss2json.com/v1/api.json?rss_url=https://www.sciencedaily.com/rss/top/science.xml'
+      'https://api.rss2json.com/v1/api.json?rss_url=https://www.sciencedaily.com/rss/all.xml'
     );
     return response.data.items.slice(0, 8).map((item, index) => ({
-      id: `science_sciencedaily_${Date.now()}_${index}`,
+      id: `science_daily_${Date.now()}_${index}`,
       user: { 
         name: 'Science Daily', 
         username: 'sciencedaily', 
-        avatar: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
-      image: item.thumbnail || getRandomImage('science', index),
-      likes: Math.floor(Math.random() * 650) + 90,
-      comments: Math.floor(Math.random() * 45) + 7,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('science', index),
+      likes: Math.floor(Math.random() * 680) + 95,
+      comments: Math.floor(Math.random() * 48) + 7,
       timestamp: new Date(item.pubDate),
       category: 'science',
       source: 'Science Daily',
@@ -868,13 +868,13 @@ const fetchNatureRSS = async () => {
       user: { 
         name: 'Nature', 
         username: 'nature', 
-        avatar: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1564325724739-bae0bd08762c?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
-      image: item.thumbnail || getRandomImage('science', index),
-      likes: Math.floor(Math.random() * 750) + 110,
-      comments: Math.floor(Math.random() * 55) + 9,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('science', index),
+      likes: Math.floor(Math.random() * 720) + 105,
+      comments: Math.floor(Math.random() * 52) + 8,
       timestamp: new Date(item.pubDate),
       category: 'science',
       source: 'Nature',
@@ -890,8 +890,8 @@ const fetchNatureRSS = async () => {
 // ============= WORLD NEWS =============
 export const fetchEnhancedWorldNews = async () => {
   const sources = [
-    fetchNewsAPIWorld(),
-    fetchNewsDataIOWorld(),
+    fetchNewsAPIWorld(), 
+    fetchNewsDataIOWorld(), 
     fetchGuardianWorld(),
     fetchAlJazeeraRSS()
   ];
@@ -1003,13 +1003,13 @@ const fetchAlJazeeraRSS = async () => {
       user: { 
         name: 'Al Jazeera', 
         username: 'aljazeera', 
-        avatar: 'https://images.unsplash.com/photo-1486401899868-0e435ed85128?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
-      image: item.thumbnail || getRandomImage('world', index),
-      likes: Math.floor(Math.random() * 750) + 110,
-      comments: Math.floor(Math.random() * 55) + 9,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('world', index),
+      likes: Math.floor(Math.random() * 870) + 135,
+      comments: Math.floor(Math.random() * 67) + 11,
       timestamp: new Date(item.pubDate),
       category: 'world',
       source: 'Al Jazeera',
@@ -1025,17 +1025,19 @@ const fetchAlJazeeraRSS = async () => {
 // ============= TECH NEWS =============
 export const fetchEnhancedTechNews = async () => {
   const sources = [
-    fetchNewsAPITech(),
-    fetchHackerNews(),
-    fetchTechCrunchRSS(),
+    fetchNewsAPITech(), 
+    fetchHackerNews(), 
+    fetchTechCrunchRSS(), 
     fetchGuardianTech(),
-    fetchWiredRSS()
+    fetchTheVergeRSS(),
+    fetchWiredRSS(),
+    fetchArsTechnicaRSS()
   ];
   try {
     const results = await Promise.allSettled(sources);
     const allNews = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
     console.log(`✅ Tech news: ${allNews.length} articles`);
-    return allNews.slice(0, 20);
+    return allNews.slice(0, 30);
   } catch (error) {
     console.error('Tech news error:', error);
     return [];
@@ -1074,7 +1076,7 @@ const fetchNewsAPITech = async () => {
 const fetchHackerNews = async () => {
   try {
     const topStoriesRes = await axios.get('https://hacker-news.firebaseio.com/v0/topstories.json');
-    const storyIds = topStoriesRes.data.slice(0, 10);
+    const storyIds = topStoriesRes.data.slice(0, 12);
     const stories = await Promise.all(storyIds.map(id => axios.get(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)));
     return stories.map(res => ({
       id: `tech_hn_${res.data.id}`,
@@ -1103,12 +1105,12 @@ const fetchHackerNews = async () => {
 const fetchTechCrunchRSS = async () => {
   try {
     const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://techcrunch.com/feed/');
-    return response.data.items.slice(0, 8).map((item, index) => ({
+    return response.data.items.slice(0, 10).map((item, index) => ({
       id: `tech_tc_${Date.now()}_${index}`,
       user: { 
         name: 'TechCrunch', 
         username: 'techcrunch', 
-        avatar: TECH_AVATARS['TechCrunch']
+        avatar: TECH_AVATARS['TechCrunch'] || TECH_AVATARS.default_tech
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
@@ -1129,7 +1131,7 @@ const fetchTechCrunchRSS = async () => {
 
 const fetchGuardianTech = async () => {
   try {
-    const response = await axios.get('https://content.guardianapis.com/technology?show-fields=thumbnail,trailText&api-key=test&page-size=8');
+    const response = await axios.get(`https://content.guardianapis.com/technology?show-fields=thumbnail,trailText&api-key=${GUARDIAN_API_KEY}&page-size=10`);
     return response.data.response.results.map((article, index) => ({
       id: `tech_guard_${article.id}`,
       user: { 
@@ -1154,10 +1156,37 @@ const fetchGuardianTech = async () => {
   }
 };
 
+const fetchTheVergeRSS = async () => {
+  try {
+    const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://www.theverge.com/rss/index.xml');
+    return response.data.items.slice(0, 10).map((item, index) => ({
+      id: `tech_verge_${Date.now()}_${index}`,
+      user: { 
+        name: 'The Verge', 
+        username: 'verge', 
+        avatar: TECH_AVATARS['The Verge']
+      },
+      text: item.title,
+      content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('tech', index),
+      likes: Math.floor(Math.random() * 750) + 180,
+      comments: Math.floor(Math.random() * 90) + 17,
+      timestamp: new Date(item.pubDate),
+      category: 'tech',
+      source: 'The Verge',
+      url: item.link,
+      liked: false
+    }));
+  } catch (error) {
+    console.log('The Verge RSS unavailable');
+    return [];
+  }
+};
+
 const fetchWiredRSS = async () => {
   try {
     const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://www.wired.com/feed/rss');
-    return response.data.items.slice(0, 8).map((item, index) => ({
+    return response.data.items.slice(0, 10).map((item, index) => ({
       id: `tech_wired_${Date.now()}_${index}`,
       user: { 
         name: 'Wired', 
@@ -1167,8 +1196,8 @@ const fetchWiredRSS = async () => {
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
       image: item.thumbnail || item.enclosure?.link || getRandomImage('tech', index),
-      likes: Math.floor(Math.random() * 700) + 180,
-      comments: Math.floor(Math.random() * 90) + 18,
+      likes: Math.floor(Math.random() * 700) + 170,
+      comments: Math.floor(Math.random() * 85) + 16,
       timestamp: new Date(item.pubDate),
       category: 'tech',
       source: 'Wired',
@@ -1181,20 +1210,48 @@ const fetchWiredRSS = async () => {
   }
 };
 
+const fetchArsTechnicaRSS = async () => {
+  try {
+    const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://feeds.arstechnica.com/arstechnica/index');
+    return response.data.items.slice(0, 8).map((item, index) => ({
+      id: `tech_ars_${Date.now()}_${index}`,
+      user: { 
+        name: 'Ars Technica', 
+        username: 'arstechnica', 
+        avatar: TECH_AVATARS['Ars Technica']
+      },
+      text: item.title,
+      content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('tech', index),
+      likes: Math.floor(Math.random() * 650) + 160,
+      comments: Math.floor(Math.random() * 75) + 14,
+      timestamp: new Date(item.pubDate),
+      category: 'tech',
+      source: 'Ars Technica',
+      url: item.link,
+      liked: false
+    }));
+  } catch (error) {
+    console.log('Ars Technica RSS unavailable');
+    return [];
+  }
+};
+
 // ============= SPORTS NEWS =============
 export const fetchEnhancedSportsNews = async () => {
   const sources = [
-    fetchNewsAPISports(),
-    fetchESPNNews(),
-    fetchBBCSports(),
-    fetchGuardianSports(),
-    fetchSkySportsRSS()
+    fetchNewsAPISports(), 
+    fetchESPNNews(), 
+    fetchBBCSports(), 
+    fetchGuardianSports(), 
+    fetchSkySportsRSS(),
+    fetchBleacherReportRSS()
   ];
   try {
     const results = await Promise.allSettled(sources);
     const allNews = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
     console.log(`✅ Sports news: ${allNews.length} articles`);
-    return allNews.slice(0, 20);
+    return allNews.slice(0, 30);
   } catch (error) {
     console.error('Sports news error:', error);
     return [];
@@ -1258,12 +1315,12 @@ const fetchSkySportsRSS = async () => {
 const fetchESPNNews = async () => {
   try {
     const response = await axios.get('https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/news');
-    return response.data.articles.slice(0, 8).map((article, index) => ({
+    return response.data.articles.slice(0, 10).map((article, index) => ({
       id: `sports_espn_${article.id || Date.now() + index}`,
       user: { 
         name: 'ESPN', 
         username: 'espn', 
-        avatar: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=100&h=100&fit=crop'
       },
       text: article.headline,
       content: article.description || article.headline,
@@ -1285,12 +1342,12 @@ const fetchESPNNews = async () => {
 const fetchBBCSports = async () => {
   try {
     const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=http://feeds.bbci.co.uk/sport/rss.xml');
-    return response.data.items.slice(0, 8).map((item, index) => ({
+    return response.data.items.slice(0, 10).map((item, index) => ({
       id: `sports_bbc_${Date.now()}_${index}`,
       user: { 
         name: 'BBC Sport', 
         username: 'bbcsport', 
-        avatar: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
@@ -1311,13 +1368,13 @@ const fetchBBCSports = async () => {
 
 const fetchGuardianSports = async () => {
   try {
-    const response = await axios.get('https://content.guardianapis.com/sport/football?show-fields=thumbnail,trailText&api-key=test&page-size=10');
+    const response = await axios.get(`https://content.guardianapis.com/sport/football?show-fields=thumbnail,trailText&api-key=${GUARDIAN_API_KEY}&page-size=12`);
     return response.data.response.results.map((article, index) => ({
       id: `sports_guard_${article.id}`,
       user: { 
         name: 'The Guardian', 
         username: 'guardian_sports', 
-        avatar: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=100&h=100&fit=crop'
+        avatar: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=100&h=100&fit=crop'
       },
       text: article.webTitle,
       content: article.fields?.trailText || article.webTitle,
@@ -1336,20 +1393,48 @@ const fetchGuardianSports = async () => {
   }
 };
 
+const fetchBleacherReportRSS = async () => {
+  try {
+    const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://bleacherreport.com/articles/feed');
+    return response.data.items.slice(0, 10).map((item, index) => ({
+      id: `sports_br_${Date.now()}_${index}`,
+      user: { 
+        name: 'Bleacher Report', 
+        username: 'bleacherreport', 
+        avatar: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=100&h=100&fit=crop'
+      },
+      text: item.title,
+      content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('sports', index),
+      likes: Math.floor(Math.random() * 1700) + 270,
+      comments: Math.floor(Math.random() * 135) + 27,
+      timestamp: new Date(item.pubDate),
+      category: 'sports',
+      source: 'Bleacher Report',
+      url: item.link,
+      liked: false
+    }));
+  } catch (error) {
+    console.log('Bleacher Report RSS unavailable');
+    return [];
+  }
+};
+
 // ============= CRYPTO NEWS =============
 export const fetchEnhancedCryptoNews = async () => {
   const sources = [
-    fetchCoinTelegraph(),
-    fetchCoinDeskRSS(),
-    fetchCryptoPanicNews(),
-    fetchCryptoNewsAPI(),
-    fetchRedditCrypto()
+    fetchCoinTelegraph(), 
+    fetchCoinDeskRSS(), 
+    fetchCryptoPanicNews(), 
+    fetchCryptoNewsAPI(), 
+    fetchRedditCrypto(),
+    fetchDecryptRSS()
   ];
   try {
     const results = await Promise.allSettled(sources);
     const allNews = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
     console.log(`✅ Crypto news: ${allNews.length} articles`);
-    return allNews.slice(0, 18);
+    return allNews.slice(0, 25);
   } catch (error) {
     console.error('Crypto news error:', error);
     return [];
@@ -1360,16 +1445,16 @@ const fetchCoinTelegraph = async () => {
   try {
     const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://cointelegraph.com/rss');
     const prices = await fetchCryptoPrices();
-    return response.data.items.slice(0, 8).map((item, index) => {
+    return response.data.items.slice(0, 10).map((item, index) => {
       const coin = prices[index % prices.length];
       return {
         id: `crypto_ct_${Date.now()}_${index}`,
         user: { 
           name: 'Cointelegraph', 
           username: 'cointelegraph', 
-          avatar: getCategoryAvatar('crypto') 
+          avatar: 'https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=100&h=100&fit=crop'
         },
-        text: `${item.title}\n\n${coin.emoji} ${coin.name}: $${coin.price.toLocaleString()} (${coin.change > 0 ? '+' : ''}${coin.change.toFixed(2)}%)`,
+        text: `${item.title}\n\n${coin.emoji} ${coin.name}: ${coin.price.toLocaleString()} (${coin.change > 0 ? '+' : ''}${coin.change.toFixed(2)}%)`,
         content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
         image: item.thumbnail || coin.image,
         likes: Math.floor(Math.random() * 900) + 150,
@@ -1390,12 +1475,12 @@ const fetchCoinTelegraph = async () => {
 const fetchCoinDeskRSS = async () => {
   try {
     const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://www.coindesk.com/arc/outboundfeeds/rss/');
-    return response.data.items.slice(0, 8).map((item, index) => ({
+    return response.data.items.slice(0, 10).map((item, index) => ({
       id: `crypto_cd_${Date.now()}_${index}`,
       user: { 
         name: 'CoinDesk', 
         username: 'coindesk', 
-        avatar: getCategoryAvatar('crypto') 
+        avatar: 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
@@ -1425,7 +1510,7 @@ const fetchCryptoPanicNews = async () => {
       user: {
         name: item.source.title,
         username: item.source.domain,
-        avatar: getCategoryAvatar('crypto')
+        avatar: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.title,
@@ -1452,7 +1537,7 @@ const fetchCryptoNewsAPI = async () => {
       user: { 
         name: item.news_url.split('/')[2], 
         username: 'crypto_news', 
-        avatar: getCategoryAvatar('crypto') 
+        avatar: 'https://images.unsplash.com/photo-1640826514546-7d2f1b7e5ecd?w=100&h=100&fit=crop'
       },
       text: item.title,
       content: item.text || item.title,
@@ -1484,7 +1569,7 @@ const fetchRedditCrypto = async () => {
           username: `u/${item.data.author}`, 
           avatar: `https://i.pravatar.cc/150?u=${item.data.author}` 
         },
-        text: `${item.data.title}\n\n${coin.emoji} ${coin.name}: $${coin.price.toLocaleString()} (${coin.change > 0 ? '+' : ''}${coin.change.toFixed(2)}%)`,
+        text: `${item.data.title}\n\n${coin.emoji} ${coin.name}: ${coin.price.toLocaleString()} (${coin.change > 0 ? '+' : ''}${coin.change.toFixed(2)}%)`,
         content: item.data.selftext || item.data.title,
         image: (item.data.thumbnail && item.data.thumbnail !== 'self' && item.data.thumbnail !== 'default') ? item.data.thumbnail : coin.image,
         likes: item.data.ups,
@@ -1498,6 +1583,33 @@ const fetchRedditCrypto = async () => {
     });
   } catch (error) {
     console.log('Reddit Crypto unavailable');
+    return [];
+  }
+};
+
+const fetchDecryptRSS = async () => {
+  try {
+    const response = await axios.get('https://api.rss2json.com/v1/api.json?rss_url=https://decrypt.co/feed');
+    return response.data.items.slice(0, 8).map((item, index) => ({
+      id: `crypto_decrypt_${Date.now()}_${index}`,
+      user: { 
+        name: 'Decrypt', 
+        username: 'decrypt', 
+        avatar: 'https://images.unsplash.com/photo-1639762681057-408e52192e55?w=100&h=100&fit=crop'
+      },
+      text: item.title,
+      content: item.description?.replace(/<[^>]*>/g, '').slice(0, 200) || item.title,
+      image: item.thumbnail || item.enclosure?.link || getRandomImage('crypto', index),
+      likes: Math.floor(Math.random() * 780) + 125,
+      comments: Math.floor(Math.random() * 95) + 16,
+      timestamp: new Date(item.pubDate),
+      category: 'crypto',
+      source: 'Decrypt',
+      url: item.link,
+      liked: false
+    }));
+  } catch (error) {
+    console.log('Decrypt RSS unavailable');
     return [];
   }
 };
