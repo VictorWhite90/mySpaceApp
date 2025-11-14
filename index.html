@@ -4,7 +4,47 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>my-socialchatapp</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>ConnectSphere - Connect, Share, Inspire Together</title>
+    <meta name="title" content="ConnectSphere - Connect, Share, Inspire Together" />
+    <meta name="description" content="Join the next generation of social networking. Share moments, engage with communities, and build meaningful connections in real-time. Get the latest news feeds and stay connected." />
+    <meta name="keywords" content="social network, news feed, connect, share, community, social media" />
+    <meta name="author" content="ConnectSphere" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://connectsphere-seven.vercel.app/" />
+    <meta property="og:title" content="ConnectSphere - Connect, Share, Inspire Together" />
+    <meta property="og:description" content="Join the next generation of social networking. Share moments, engage with communities, and build meaningful connections in real-time." />
+    <meta property="og:image" content="https://connectsphere-seven.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ConnectSphere - Social Networking Platform" />
+    <meta property="og:site_name" content="ConnectSphere" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://connectsphere-seven.vercel.app/" />
+    <meta name="twitter:title" content="ConnectSphere - Connect, Share, Inspire Together" />
+    <meta name="twitter:description" content="Join the next generation of social networking. Share moments, engage with communities, and build meaningful connections in real-time." />
+    <meta name="twitter:image" content="https://connectsphere-seven.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="ConnectSphere - Social Networking Platform" />
+    
+    <!-- Additional Meta Tags -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <script>
+      // Apply dark mode before React loads to prevent flash
+      (function() {
+        const saved = localStorage.getItem('connectsphere-darkmode');
+        const isDark = saved ? JSON.parse(saved) : false;
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -22,18 +22,13 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // FIXED: Apply dark mode to document - THIS IS THE CRITICAL FIX
+  // Apply dark mode to document
   useEffect(() => {
-    console.log('🎯 AppContext: Applying dark mode:', darkMode);
-    
     if (darkMode) {
       document.documentElement.classList.add('dark');
-      console.log('✅ Added "dark" class to html');
     } else {
       document.documentElement.classList.remove('dark');
-      console.log('✅ Removed "dark" class from html');
     }
-    
     localStorage.setItem('connectsphere-darkmode', JSON.stringify(darkMode));
   }, [darkMode]);
 

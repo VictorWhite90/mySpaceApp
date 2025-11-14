@@ -11,6 +11,7 @@ import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
 import { fetchAllNewsFeed, fetchRealComments } from '../utils/realDataApis';
 import { useScrollReveal } from '../hooks/useScrollReveals.jsx';
+import { useMetaTags } from '../utils/metaTags';
 
 export const Dashboard = ({ user, onLogout }) => {
   const [posts, setPosts] = useState([]);
@@ -33,67 +34,19 @@ export const Dashboard = ({ user, onLogout }) => {
   const scrollContainerRef = useRef(null);
   const lastFetchTime = useRef(Date.now());
   const lastPostsSnapshot = useRef([]);
+  const autoRefreshInterval = useRef(null);
+  const isPageVisible = useRef(true);
+
+  // Update meta tags for social sharing
+  useMetaTags({
+    title: 'Dashboard - ConnectSphere',
+    description: 'Stay connected with the latest news feeds, updates, and community posts on ConnectSphere.',
+    url: window.location.href
+  });
 
   useScrollReveal();
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (showCommentModal) {
-      // Save current scroll position
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-    } else {
-      // Restore scroll position
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
-    }
-
-    return () => {
-      // Cleanup on unmount
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-    };
-  }, [showCommentModal]);
-
-  // Memoized load posts function
-  const loadPosts = useCallback(async (pageNum = 1, isNew = false) => {
-    try {
-      console.log('🔄 Loading posts...');
-      setError(null);
-
-      const allPosts = await fetchAllNewsFeed();
-
-      // Sort by timestamp
-      const sortedPosts = allPosts
-        .filter(post => post && post.timestamp)
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-      console.log(`✅ Loaded ${sortedPosts.length} posts`);
-
-      // For new feeds or first load, return fresh posts
-      if (isNew || pageNum === 1) {
-        return sortedPosts.slice(0, 20);
-      } else {
-        // For load more, return additional posts
-        return sortedPosts.slice(0, 20 * pageNum);
-      }
-    } catch (error) {
-      console.error('❌ Error loading posts:', error);
-      setError('Failed to load posts. Using demo data.');
-      
-      // Provide fallback data
-      const fallbackPosts = getFallbackPosts();
-      showToast('Using demo data - API might be limited', 'warning');
-      return fallbackPosts.slice(0, 20);
-    }
-  }, [showToast]);
-
+  // Helper function for fallback posts - MUST be defined before loadPosts
   const getFallbackPosts = () => {
     const categories = ['tech', 'sports', 'crypto', 'music', 'nigeria'];
     const categoryNames = {
@@ -127,6 +80,129 @@ export const Dashboard = ({ user, onLogout }) => {
     });
   };
 
+  // Memoized load posts function - MUST be defined before handleRefresh
+  const loadPosts = useCallback(async (pageNum = 1, isNew = false, forceRefresh = false) => {
+    try {
+      console.log(`🔄 Loading posts... (forceRefresh: ${forceRefresh})`);
+      setError(null);
+
+      // Force refresh if explicitly requested
+      const allPosts = await fetchAllNewsFeed(forceRefresh);
+
+      // Posts are already sorted by timestamp from fetchAllNewsFeed
+      const sortedPosts = allPosts.filter(post => post && post.timestamp);
+
+      console.log(`✅ Loaded ${sortedPosts.length} posts`);
+
+      // For new feeds or first load, return fresh posts
+      if (isNew || pageNum === 1) {
+        return sortedPosts.slice(0, 20);
+      } else {
+        // For load more, return additional posts
+        return sortedPosts.slice(0, 20 * pageNum);
+      }
+    } catch (error) {
+      console.error('❌ Error loading posts:', error);
+      setError('Failed to load posts. Using demo data.');
+      
+      // Provide fallback data
+      const fallbackPosts = getFallbackPosts();
+      showToast('Using demo data - API might be limited', 'warning');
+      return fallbackPosts.slice(0, 20);
+    }
+  }, [showToast]);
+
+  // Pull to refresh implementation - Enhanced with better update detection
+  const handleRefresh = useCallback(async () => {
+    // Prevent rapid refreshes (reduced to 2 seconds for better UX)
+    const timeSinceLastFetch = Date.now() - lastFetchTime.current;
+    if (timeSinceLastFetch < 2000) {
+      showToast('Please wait before refreshing again', 'info');
+      return;
+    }
+
+    setLoadingNew(true);
+    setPage(1);
+    try {
+      // Force fetch new data (bypass cache)
+      const newPosts = await loadPosts(1, true, true);
+      
+      // Better content comparison - check if we have genuinely new posts
+      const oldPostIds = new Set(lastPostsSnapshot.current.map(p => p.id?.split('_')[0] || p.id));
+      const newPostIds = new Set(newPosts.map(p => p.id?.split('_')[0] || p.id));
+      
+      // Count how many posts are actually new
+      const newPostCount = newPosts.filter(p => {
+        const baseId = p.id?.split('_')[0] || p.id;
+        return !oldPostIds.has(baseId);
+      }).length;
+      
+      setPosts(newPosts);
+      lastPostsSnapshot.current = newPosts;
+      lastFetchTime.current = Date.now();
+      
+      if (newPostCount > 0) {
+        showToast(`Feed updated! ${newPostCount} new ${newPostCount === 1 ? 'post' : 'posts'} available`, 'success');
+      } else {
+        showToast('You\'re all caught up! No new posts yet.', 'info');
+      }
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+      showToast('Error refreshing posts', 'error');
+    } finally {
+      setLoadingNew(false);
+    }
+  }, [loadPosts, showToast]);
+
+  // Auto-refresh newsfeed every 5 minutes when page is visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isPageVisible.current = !document.hidden;
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Auto-refresh every 5 minutes (300000ms) when page is visible
+    autoRefreshInterval.current = setInterval(() => {
+      if (isPageVisible.current && !loading && !loadingNew) {
+        console.log('🔄 Auto-refreshing newsfeed...');
+        handleRefresh();
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (autoRefreshInterval.current) {
+        clearInterval(autoRefreshInterval.current);
+      }
+    };
+  }, [loading, loadingNew, handleRefresh]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showCommentModal) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+    };
+  }, [showCommentModal]);
+
   // Initial data load
   useEffect(() => {
     if (user) {
@@ -150,40 +226,6 @@ export const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  // Pull to refresh implementation - FIXED
-  const handleRefresh = async () => {
-    // Prevent rapid refreshes
-    const timeSinceLastFetch = Date.now() - lastFetchTime.current;
-    if (timeSinceLastFetch < 3000) {
-      showToast('Please wait before refreshing again', 'info');
-      return;
-    }
-
-    setLoadingNew(true);
-    setPage(1);
-    try {
-      // Force fetch new data
-      const newPosts = await loadPosts(1, true);
-      
-      // Check if we got new posts
-      const hasNewContent = JSON.stringify(newPosts) !== JSON.stringify(lastPostsSnapshot.current);
-      
-      setPosts(newPosts);
-      lastPostsSnapshot.current = newPosts;
-      lastFetchTime.current = Date.now();
-      
-      if (hasNewContent) {
-        showToast('Feed updated with new content!', 'success');
-      } else {
-        showToast('You\'re all caught up!', 'info');
-      }
-    } catch (error) {
-      console.error('Error refreshing posts:', error);
-      showToast('Error refreshing posts', 'error');
-    } finally {
-      setLoadingNew(false);
-    }
-  };
 
   const loadMorePosts = async () => {
     if (loadingMore) return;
@@ -350,7 +392,7 @@ export const Dashboard = ({ user, onLogout }) => {
             {/* Category Filters & Refresh - Desktop */}
             <div className="hidden md:flex items-center gap-4">
               <div className="flex gap-2">
-                {['all', 'tech', 'sports', 'crypto', 'business'].map(category => (
+                {['all', 'tech', 'sports', 'crypto'].map(category => (
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
@@ -368,7 +410,7 @@ export const Dashboard = ({ user, onLogout }) => {
               <button
                 onClick={handleRefresh}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-all text-gray-900 dark:text-white disabled:opacity-50"
-                title="Refresh feed"
+                title="Refresh feed (Auto-refreshes every 5 minutes)"
                 disabled={loading || loadingNew}
               >
                 <RefreshCw size={18} className={loadingNew ? 'animate-spin' : ''} />
@@ -470,7 +512,7 @@ export const Dashboard = ({ user, onLogout }) => {
           {/* Category Filters (Mobile) */}
           <div className="md:hidden flex items-center gap-4 pb-4">
             <div className="flex gap-2 overflow-x-auto flex-1 scrollbar-hide">
-              {['all', 'tech', 'sports', 'crypto', 'business'].map(category => (
+              {['all', 'tech', 'sports', 'crypto'].map(category => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
@@ -487,7 +529,7 @@ export const Dashboard = ({ user, onLogout }) => {
             <button
               onClick={handleRefresh}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-white disabled:opacity-50"
-              title="Refresh feed"
+              title="Refresh feed (Auto-refreshes every 5 minutes)"
               disabled={loading || loadingNew}
             >
               <RefreshCw size={18} className={loadingNew ? 'animate-spin' : ''} />
@@ -549,10 +591,10 @@ export const Dashboard = ({ user, onLogout }) => {
         <div className="relative">
           {/* Pull to Refresh Indicator */}
           <div className={`absolute -top-16 left-1/2 transform -translate-x-1/2 transition-all duration-300 z-10 ${
-            loadingNew ? 'opacity-100' : 'opacity-0'
+            loadingNew ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
           }`}>
             <div className="bg-white dark:bg-gray-900 rounded-full shadow-lg px-4 py-3 flex items-center gap-3 border border-gray-200 dark:border-gray-700">
-              <RefreshCw size={18} className={`text-blue-600 ${loadingNew ? 'animate-spin' : ''}`} />
+              <RefreshCw size={18} className={`text-blue-600 dark:text-blue-400 ${loadingNew ? 'animate-spin' : ''}`} />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Loading new feeds...
               </span>

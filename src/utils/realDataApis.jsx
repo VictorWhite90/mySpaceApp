@@ -16,9 +16,26 @@ const TECH_AVATARS = {
   'default_tech': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=100&h=100&fit=crop'
 };
 
+// Cache for news feeds with timestamps
+const newsCache = {
+  data: null,
+  timestamp: null,
+  CACHE_DURATION: 5 * 60 * 1000 // 5 minutes cache
+};
+
 // ============= FETCH ALL NEWS FEED =============
-export const fetchAllNewsFeed = async () => {
+export const fetchAllNewsFeed = async (forceRefresh = false) => {
   try {
+    // Check cache if not forcing refresh
+    const now = Date.now();
+    if (!forceRefresh && newsCache.data && newsCache.timestamp && 
+        (now - newsCache.timestamp) < newsCache.CACHE_DURATION) {
+      console.log('📦 Using cached news feed');
+      return newsCache.data;
+    }
+
+    console.log('🔄 Fetching fresh news feed from all sources...');
+    
     const [
       generalNews,
       techNews,
@@ -41,6 +58,7 @@ export const fetchAllNewsFeed = async () => {
       fetchEnhancedCryptoNews()
     ]);
 
+    // Combine all news and sort by timestamp (newest first)
     const allPosts = [
       ...generalNews,
       ...techNews,
@@ -51,12 +69,31 @@ export const fetchAllNewsFeed = async () => {
       ...scienceNews,
       ...worldNews,
       ...cryptoNews
-    ].sort(() => Math.random() - 0.5).slice(0, 100);
+    ]
+      .filter(post => post && post.timestamp) // Filter out invalid posts
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // Sort by newest first
+      .slice(0, 150); // Get more posts for better variety
 
-    console.log(`✅ Total posts loaded: ${allPosts.length}`);
-    return allPosts;
+    // Add unique IDs with timestamp to ensure freshness
+    const postsWithFreshIds = allPosts.map((post, index) => ({
+      ...post,
+      id: `${post.id}_${Date.now()}_${index}`,
+      fetchedAt: new Date() // Track when we fetched this
+    }));
+
+    // Update cache
+    newsCache.data = postsWithFreshIds;
+    newsCache.timestamp = now;
+
+    console.log(`✅ Total posts loaded: ${postsWithFreshIds.length} (Fresh: ${forceRefresh ? 'Yes' : 'Cached'})`);
+    return postsWithFreshIds;
   } catch (error) {
     console.error('Error fetching all news feed:', error);
+    // Return cached data if available, even if expired
+    if (newsCache.data) {
+      console.log('⚠️ Using expired cache due to error');
+      return newsCache.data;
+    }
     throw new Error('Unable to fetch news feeds. Please try again later.');
   }
 };

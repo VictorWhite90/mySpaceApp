@@ -17,12 +17,12 @@ import { createUserProfile } from './services/firebaseService';
 
 // Loading Component
 const LoadingScreen = () => (
-  <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+  <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300 flex items-center justify-center">
     <div className="text-center">
-      <div className="w-16 h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-xl animate-bounce mx-auto mb-4">
+      <div className="w-16 h-16 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-xl animate-bounce mx-auto mb-4 transition-colors duration-300">
         <span className="text-white dark:text-black font-bold text-3xl">C</span>
       </div>
-      <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Loading...</p>
     </div>
   </div>
 );

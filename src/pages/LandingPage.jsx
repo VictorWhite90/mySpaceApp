@@ -3,10 +3,18 @@ import { Moon, Sun, Sparkles, Zap, Bell, Users, TrendingUp } from 'lucide-react'
 import { Button } from '../components/common/Button';
 import { useApp } from '../context/AppContext';
 import { useScrollReveal } from '../hooks/useScrollReveals';
+import { useMetaTags } from '../utils/metaTags';
 
 export const LandingPage = () => {
   const { darkMode, toggleDarkMode } = useApp();
   const navigate = useNavigate();
+
+  // Update meta tags for social sharing
+  useMetaTags({
+    title: 'ConnectSphere - Connect, Share, Inspire Together',
+    description: 'Join the next generation of social networking. Share moments, engage with communities, and build meaningful connections in real-time.',
+    url: window.location.href
+  });
 
   // Initialize scroll reveal animations - attach ref to main container
   const scrollRevealRef = useScrollReveal('.scroll-reveal');
